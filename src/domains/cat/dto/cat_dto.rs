@@ -23,25 +23,25 @@ pub struct Cat {
 }
 
 impl Cat {
-    pub fn create(conn: &mut PgConnection, cat: &NewCat) -> Cat {
+    pub fn create(conn: &mut PgConnection, cat: &NewCat) -> Self {
         diesel::insert_into(cats::table)
             .values(cat)
             .get_result(conn)
             .expect("Error saving new cat")
     }
 
-    pub fn read(conn: &mut PgConnection) -> Vec<Cat> {
+    pub fn read(conn: &mut PgConnection) -> Vec<Self> {
         cats::table
             .order(cats::id.desc())
-            .load::<Cat>(conn)
+            .load::<Self>(conn)
             .expect("Error reading cats")
     }
 
-    pub fn read_one(conn: &mut PgConnection, id: i32) -> Option<Cat> {
+    pub fn read_one(conn: &mut PgConnection, id: i32) -> Option<Self> {
         cats::table.find(id).first(conn).ok()
     }
 
-    pub fn update(&self, conn: &mut PgConnection, new_cat: &Cat) -> Cat {
+    pub fn update(&self, conn: &mut PgConnection, new_cat: &Self) -> Self {
         diesel::update(cats::table.find(self.id))
             .set(new_cat)
             .get_result(conn)
