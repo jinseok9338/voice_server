@@ -1,19 +1,60 @@
-// this is where we define cat interface and model
+use diesel::prelude::*;
 
+use chrono::NaiveDateTime;
+use diesel::{Insertable, Queryable};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+
+use crate::schema::cats;
+
+use super::new_cat::NewCat;
+
+#[derive(Queryable, Insertable,AsChangeset, Serialize, Deserialize)]
+#[diesel(table_name = cats)]
 pub struct Cat {
     pub id: i32,
     pub name: String,
     pub age: i32,
     pub breed: String,
     pub color: String,
-    pub weight: f32,
-    pub image: String,
-    pub created_at: String,
-    pub updated_at: String,
+    pub weight: f64,
+    pub image: Option<String>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
-// basic CRUD interface to the data base
+impl Cat {
+  
+    pub fn create(conn: &mut PgConnection, cat: &NewCat) -> Cat {
+        diesel::insert_into(cats::table)
+            .values(cat)
+            .get_result(conn)
+            .expect("Error saving new cat")
+    }
+
+    pub fn read(conn: &mut PgConnection) -> Vec<Cat> {
+        cats::table
+            .order(cats::id.desc())
+            .load::<Cat>(conn)
+            .expect("Error reading cats")
+    }
+
+    pub fn read_one(conn: &mut PgConnection, id: i32) -> Option<Cat> {
+        cats::table.find(id).first(conn).ok()
+    }
+
+    pub fn update(&self, conn: &mut PgConnection, new_cat:&Cat) -> Cat {
+        diesel::update(cats::table.find(self.id))
+            .set(new_cat)
+            .get_result(conn)
+            .expect("Error updating cat")
+    }
+
+    pub fn delete(conn: &mut PgConnection, id: i32) -> usize {
+        diesel::delete(cats::table.find(id))
+            .execute(conn)
+            .expect("Error deleting cat")
+    }
+}
+
 
