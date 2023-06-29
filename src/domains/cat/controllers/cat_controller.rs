@@ -31,7 +31,10 @@ async fn get_cat(path: web::Path<i32>) -> impl Responder {
     let mut conn = Db::connect_to_db();
     let id = path.into_inner();
     let mut service = CatService::new(&mut conn);
-    service.read_one_cat(id).map_or_else(|| HttpResponse::NotFound().json(json!({ "message": "Cat not found" })), |cat| HttpResponse::Ok().json(cat))
+    service.read_one_cat(id).map_or_else(
+        || HttpResponse::NotFound().json(json!({ "message": "Cat not found" })),
+        |cat| HttpResponse::Ok().json(cat),
+    )
 }
 
 #[put("/cats/{id}")]
