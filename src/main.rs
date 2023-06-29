@@ -21,6 +21,9 @@ async fn actix_web() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send +
         cfg.service(cat_controller::get_cat);
         cfg.service(cat_controller::update_cat);
         cfg.service(cat_controller::delete_cat);
+
+
+        
     };
 
     Ok(config.into())
