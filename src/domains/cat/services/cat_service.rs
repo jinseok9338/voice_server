@@ -2,10 +2,8 @@ use diesel::pg::PgConnection;
 
 use crate::domains::cat::dto::{cat_dto::Cat, new_cat::NewCat};
 
-
-
 pub struct CatService<'a> {
-   pub conn: &'a mut PgConnection,
+    pub conn: &'a mut PgConnection,
 }
 
 impl<'a> CatService<'a> {

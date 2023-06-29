@@ -2,10 +2,13 @@ use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use chrono::Utc;
 use serde_json::json;
 
-
-use crate::{Db, domains::cat::{services::cat_service::CatService, dto::{cat_dto::Cat, new_cat::NewCat}}};
-
-
+use crate::{
+    domains::cat::{
+        dto::{cat_dto::Cat, new_cat::NewCat},
+        services::cat_service::CatService,
+    },
+    Db,
+};
 
 #[get("/cats")]
 async fn get_cats() -> impl Responder {
@@ -23,7 +26,6 @@ async fn create_cat(cat: web::Json<NewCat>) -> impl Responder {
     HttpResponse::Created().json(created_cat)
 }
 
-
 #[get("/cats/{id}")]
 async fn get_cat(path: web::Path<i32>) -> impl Responder {
     let mut conn = Db::connect_to_db();
@@ -37,11 +39,7 @@ async fn get_cat(path: web::Path<i32>) -> impl Responder {
 }
 
 #[put("/cats/{id}")]
-async fn update_cat(
-    path: web::Path<i32>,
-    cat: web::Json<NewCat>,
-
-) -> impl Responder {
+async fn update_cat(path: web::Path<i32>, cat: web::Json<NewCat>) -> impl Responder {
     let mut conn = Db::connect_to_db();
     let mut service = CatService::new(&mut conn);
     let id = path.into_inner();
@@ -50,7 +48,7 @@ async fn update_cat(
     match matched {
         Some(found_cat) => {
             //chagne the value inside the cat with the newCat value
-            let update_cat_input = Cat{
+            let update_cat_input = Cat {
                 id: found_cat.id,
                 name: cat.name.clone(),
                 age: cat.age,
@@ -67,12 +65,10 @@ async fn update_cat(
         }
         None => HttpResponse::NotFound().json(json!({ "message": "Cat not found" })),
     }
-    
- 
 }
 
 #[delete("/cats/{id}")]
-async fn delete_cat(path: web::Path<i32>, ) -> impl Responder {
+async fn delete_cat(path: web::Path<i32>) -> impl Responder {
     let mut conn = Db::connect_to_db();
     let id = path.into_inner();
     let mut service = CatService::new(&mut conn);

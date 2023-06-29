@@ -4,12 +4,11 @@ use chrono::NaiveDateTime;
 use diesel::{Insertable, Queryable};
 use serde::{Deserialize, Serialize};
 
-
 use crate::schema::cats;
 
 use super::new_cat::NewCat;
 
-#[derive(Queryable, Insertable,AsChangeset, Serialize, Deserialize)]
+#[derive(Queryable, Insertable, AsChangeset, Serialize, Deserialize)]
 #[diesel(table_name = cats)]
 pub struct Cat {
     pub id: i32,
@@ -24,7 +23,6 @@ pub struct Cat {
 }
 
 impl Cat {
-  
     pub fn create(conn: &mut PgConnection, cat: &NewCat) -> Cat {
         diesel::insert_into(cats::table)
             .values(cat)
@@ -43,7 +41,7 @@ impl Cat {
         cats::table.find(id).first(conn).ok()
     }
 
-    pub fn update(&self, conn: &mut PgConnection, new_cat:&Cat) -> Cat {
+    pub fn update(&self, conn: &mut PgConnection, new_cat: &Cat) -> Cat {
         diesel::update(cats::table.find(self.id))
             .set(new_cat)
             .get_result(conn)
@@ -56,5 +54,3 @@ impl Cat {
             .expect("Error deleting cat")
     }
 }
-
-
