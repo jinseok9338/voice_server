@@ -7,7 +7,7 @@ use crate::{
         dto::{cat_dto::Cat, new_cat::NewCat},
         services::cat_service::CatService,
     },
-    Db,
+    Db, errors::base_error_messages::BaseError,
 };
 
 #[get("/cats")]
@@ -19,26 +19,28 @@ async fn get_cats() -> impl Responder {
 }
 
 #[post("/cats")]
-async fn create_cat(cat: web::Json<NewCat>) -> impl Responder {
+async fn create_cat(cat: web::Json<NewCat>) -> Result<impl Responder, BaseError> {
     let mut conn = Db::connect_to_db();
     let mut service = CatService::new(&mut conn);
     let created_cat = service.create_cat(&cat);
-    HttpResponse::Created().json(created_cat)
+    //find cat by id of the cat that was just created
+    let found_cat = service.read_one_cat(created_cat.id);
+    found_cat.map_or_else(|| Err(BaseError::InternalServerError), |cat| Ok(HttpResponse::Ok().json(cat)))
 }
 
 #[get("/cats/{id}")]
-async fn get_cat(path: web::Path<i32>) -> impl Responder {
+async fn get_cat(path: web::Path<i32>) -> Result<impl Responder, BaseError> {
     let mut conn = Db::connect_to_db();
     let id = path.into_inner();
     let mut service = CatService::new(&mut conn);
     service.read_one_cat(id).map_or_else(
-        || HttpResponse::NotFound().json(json!({ "message": "Cat not found" })),
-        |cat| HttpResponse::Ok().json(cat),
+        || Err(BaseError::NotFound(format!("Cat with ID {} not found", id))),
+        |cat| Ok(HttpResponse::Ok().json(cat)),
     )
 }
 
 #[put("/cats/{id}")]
-async fn update_cat(path: web::Path<i32>, cat: web::Json<NewCat>) -> impl Responder {
+async fn update_cat(path: web::Path<i32>, cat: web::Json<NewCat>) -> Result<impl Responder, BaseError> {
     let mut conn = Db::connect_to_db();
     let mut service = CatService::new(&mut conn);
     let id = path.into_inner();
@@ -60,9 +62,9 @@ async fn update_cat(path: web::Path<i32>, cat: web::Json<NewCat>) -> impl Respon
                 created_at: found_cat.created_at,
             };
             let updated_cat: Cat = service.update_cat(&update_cat_input);
-            HttpResponse::Ok().json(updated_cat)
+            Ok(HttpResponse::Ok().json(updated_cat))
         }
-        None => HttpResponse::NotFound().json(json!({ "message": "Cat not found" })),
+        None => Err(BaseError::NotFound(format!("Cat with ID {} not found", id))),
     }
 }
 

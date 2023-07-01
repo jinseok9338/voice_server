@@ -1,6 +1,18 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    auths (id) {
+        id -> Int4,
+        access_token -> Text,
+        refresh_token -> Text,
+        user_id -> Int4,
+        created_at -> Nullable<Timestamptz>,
+        is_valid -> Bool,
+        expiration -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
     cats (id) {
         id -> Int4,
         name -> Text,
@@ -13,3 +25,24 @@ diesel::table! {
         updated_at -> Timestamp,
     }
 }
+
+diesel::table! {
+    users (id) {
+        id -> Int4,
+        username -> Text,
+        password -> Text,
+        email -> Text,
+        last_login_at -> Nullable<Timestamptz>,
+        user_image -> Nullable<Text>,
+        created_at -> Nullable<Timestamptz>,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::joinable!(auths -> users (user_id));
+
+diesel::allow_tables_to_appear_in_same_query!(
+    auths,
+    cats,
+    users,
+);

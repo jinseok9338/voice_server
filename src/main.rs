@@ -1,6 +1,8 @@
 mod database;
 mod domains;
 mod schema;
+mod errors;
+
 
 use actix_web::web::ServiceConfig;
 use database::postgres_pool::Db;
