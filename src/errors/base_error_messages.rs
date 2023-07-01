@@ -24,8 +24,7 @@ impl ResponseError for BaseError {
             Self::NotFound(msg) => HttpResponse::NotFound().json(msg),
             Self::InternalServerError => {
                 HttpResponse::InternalServerError().json("Internal server error")
-            }
-            // add other error types here
+            } // add other error types here
         }
     }
 }
