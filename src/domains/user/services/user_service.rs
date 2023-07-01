@@ -2,9 +2,7 @@ use diesel::pg::PgConnection;
 
 use crate::domains::user::dto::{new_user_dto::NewUser, user_dto::User};
 
-use super::database::users::{create, read, read_one, update_one, delete_one};
-
-
+use super::database::users::{create, delete_one, read, read_one, update_one};
 
 pub struct UserService<'a> {
     pub conn: &'a mut PgConnection,

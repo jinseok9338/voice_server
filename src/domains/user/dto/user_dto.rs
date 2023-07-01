@@ -1,10 +1,8 @@
 use chrono::NaiveDateTime;
-use diesel::{Insertable, Queryable,AsChangeset};
+use diesel::{AsChangeset, Insertable, Queryable};
 use serde::{Deserialize, Serialize};
 
 use crate::schema::users;
-
-
 
 #[derive(Queryable, Insertable, AsChangeset, Serialize, Deserialize)]
 #[diesel(table_name = users)]

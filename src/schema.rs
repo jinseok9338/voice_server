@@ -41,8 +41,4 @@ diesel::table! {
 
 diesel::joinable!(auths -> users (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    auths,
-    cats,
-    users,
-);
+diesel::allow_tables_to_appear_in_same_query!(auths, cats, users,);

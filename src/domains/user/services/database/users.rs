@@ -1,6 +1,11 @@
 // this is where the basic CRUD operations are defineduse diesel::prelude::*;
-use diesel::{PgConnection, query_dsl::methods::OrderDsl, ExpressionMethods, RunQueryDsl, QueryDsl};
-use crate::{schema::users, domains::user::dto::{new_user_dto::NewUser, user_dto::User}};
+use crate::{
+    domains::user::dto::{new_user_dto::NewUser, user_dto::User},
+    schema::users,
+};
+use diesel::{
+    query_dsl::methods::OrderDsl, ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl,
+};
 
 pub fn create(conn: &mut PgConnection, user: &NewUser) -> User {
     diesel::insert_into(users::table)

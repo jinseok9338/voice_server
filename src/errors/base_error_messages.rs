@@ -22,7 +22,9 @@ impl ResponseError for BaseError {
     fn error_response(&self) -> HttpResponse {
         match self {
             Self::NotFound(msg) => HttpResponse::NotFound().json(msg),
-            Self::InternalServerError => HttpResponse::InternalServerError().json("Internal server error"),
+            Self::InternalServerError => {
+                HttpResponse::InternalServerError().json("Internal server error")
+            }
             // add other error types here
         }
     }

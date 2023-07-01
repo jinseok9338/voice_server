@@ -7,7 +7,8 @@ use crate::{
         dto::{cat_dto::Cat, new_cat::NewCat},
         services::cat_service::CatService,
     },
-    Db, errors::base_error_messages::BaseError,
+    errors::base_error_messages::BaseError,
+    Db,
 };
 
 #[get("/cats")]
@@ -25,7 +26,10 @@ async fn create_cat(cat: web::Json<NewCat>) -> Result<impl Responder, BaseError>
     let created_cat = service.create_cat(&cat);
     //find cat by id of the cat that was just created
     let found_cat = service.read_one_cat(created_cat.id);
-    found_cat.map_or_else(|| Err(BaseError::InternalServerError), |cat| Ok(HttpResponse::Ok().json(cat)))
+    found_cat.map_or_else(
+        || Err(BaseError::InternalServerError),
+        |cat| Ok(HttpResponse::Ok().json(cat)),
+    )
 }
 
 #[get("/cats/{id}")]
@@ -40,7 +44,10 @@ async fn get_cat(path: web::Path<i32>) -> Result<impl Responder, BaseError> {
 }
 
 #[put("/cats/{id}")]
-async fn update_cat(path: web::Path<i32>, cat: web::Json<NewCat>) -> Result<impl Responder, BaseError> {
+async fn update_cat(
+    path: web::Path<i32>,
+    cat: web::Json<NewCat>,
+) -> Result<impl Responder, BaseError> {
     let mut conn = Db::connect_to_db();
     let mut service = CatService::new(&mut conn);
     let id = path.into_inner();
