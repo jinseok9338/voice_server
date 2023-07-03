@@ -2,7 +2,7 @@
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL,
+    password TEXT,
     email TEXT NOT NULL UNIQUE,
     last_login_at TIMESTAMP WITH TIME ZONE,
     user_image TEXT,

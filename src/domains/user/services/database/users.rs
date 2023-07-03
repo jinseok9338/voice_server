@@ -14,7 +14,7 @@ pub fn create(conn: &mut PgConnection, user: &NewUser) -> User {
         .expect("Error saving new user")
 }
 
-pub fn read(conn: &mut PgConnection) -> Vec<User> {
+pub fn _read(conn: &mut PgConnection) -> Vec<User> {
     OrderDsl::order(users::table, users::id.desc())
         .load::<User>(conn)
         .expect("Error reading users")
@@ -24,9 +24,16 @@ pub fn read_one(conn: &mut PgConnection, id: i32) -> Option<User> {
     users::table.find(id).first(conn).ok()
 }
 
-pub fn update_one(conn: &mut PgConnection, id: i32, new_cat: &User) -> User {
+pub fn read_one_user_by_name(conn: &mut PgConnection, user_name: &str) -> Option<User> {
+    users::table
+        .filter(users::username.eq(user_name))
+        .first(conn)
+        .ok()
+}
+
+pub fn update_one(conn: &mut PgConnection, id: i32, user: &NewUser) -> User {
     diesel::update(users::table.find(id))
-        .set(new_cat)
+        .set(user)
         .get_result(conn)
         .expect("Error updating user")
 }

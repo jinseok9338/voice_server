@@ -7,5 +7,6 @@ CREATE TABLE auths (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     is_valid BOOLEAN NOT NULL,
     expiration TIMESTAMP WITH TIME ZONE,
+    auth_provider TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id)
 );

@@ -5,6 +5,8 @@ use std::fmt;
 pub enum BaseError {
     NotFound(String),
     InternalServerError,
+    Unauthorized,
+    Conflict(String),
     // add other error types here
 }
 
@@ -13,6 +15,8 @@ impl fmt::Display for BaseError {
         match self {
             Self::NotFound(msg) => write!(f, "Not found: {}", msg),
             Self::InternalServerError => write!(f, "Internal server error"),
+            Self::Unauthorized => write!(f, "Unauthorized"),
+            Self::Conflict(msg) => write!(f, "Conflict: {}", msg),
             // add other error types here
         }
     }
@@ -25,6 +29,8 @@ impl ResponseError for BaseError {
             Self::InternalServerError => {
                 HttpResponse::InternalServerError().json("Internal server error")
             } // add other error types here
+            Self::Unauthorized => HttpResponse::Unauthorized().json("Unauthorized"),
+            Self::Conflict(msg) => HttpResponse::Conflict().json(msg),
         }
     }
 }
