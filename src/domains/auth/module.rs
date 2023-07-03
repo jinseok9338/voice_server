@@ -1,5 +1,3 @@
-
-
 use super::controllers::auth_controller;
 use actix_web::web::{self, ServiceConfig};
 

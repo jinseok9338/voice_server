@@ -3,7 +3,7 @@ use diesel::pg::PgConnection;
 use crate::domains::user::dto::{new_user_dto::NewUser, user_dto::User};
 
 use super::database::users::{
-    create, delete_one, read_one, read_one_user_by_name, update_one, _read,
+    _read, create, delete_one, read_one, read_one_user_by_name, update_one,
 };
 
 pub struct UserService<'a> {
@@ -31,7 +31,7 @@ impl<'a> UserService<'a> {
         read_one_user_by_name(self.conn, user_name)
     }
 
-    pub fn update_user(&mut self, id:i32, user: &NewUser) -> User {
+    pub fn update_user(&mut self, id: i32, user: &NewUser) -> User {
         update_one(self.conn, id, user)
     }
 

@@ -58,21 +58,20 @@ async fn logout(req: HttpRequest) -> Result<impl Responder, BaseError> {
 
     // get the token from the header using actix web HttpRequest
     let token = auth_header.trim_start_matches("Bearer ");
-    
+
     // secret is env.ACCESS_TOKEN_SECRET
     let secret = std::env::var("ACCESS_TOKEN_SECRET");
     let secret = match secret {
         Ok(secret) => secret,
         Err(_) => return Err(BaseError::Unauthorized),
     };
-    
+
     let mut conn = Db::connect_to_db();
     let claim = decode_access_token(token, secret).expect("Error decoding token");
     make_token_invalid_by_user_id(&mut conn, &claim.user_id);
-    
+
     Ok(HttpResponse::Ok().json(json!({"message": "Logout successful"})))
 }
-
 
 #[post("/signup")]
 async fn signup(user: web::Json<NewUser>) -> Result<impl Responder, BaseError> {
