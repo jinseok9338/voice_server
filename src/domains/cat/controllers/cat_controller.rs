@@ -38,7 +38,7 @@ async fn get_cat(path: web::Path<i32>) -> Result<impl Responder, BaseError> {
     let id = path.into_inner();
     let mut service = CatService::new(&mut conn);
     service.read_one_cat(id).map_or_else(
-        || Err(BaseError::NotFound(format!("Cat with ID {} not found", id))),
+        || Err(BaseError::InternalServerError),
         |cat| Ok(HttpResponse::Ok().json(cat)),
     )
 }
@@ -71,7 +71,7 @@ async fn update_cat(
             let updated_cat: Cat = service.update_cat(&update_cat_input);
             Ok(HttpResponse::Ok().json(updated_cat))
         }
-        None => Err(BaseError::NotFound(format!("Cat with ID {} not found", id))),
+        None => Err(BaseError::InternalServerError),
     }
 }
 

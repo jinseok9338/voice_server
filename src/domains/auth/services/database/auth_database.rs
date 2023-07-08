@@ -4,6 +4,7 @@ use diesel::prelude::*;
 use diesel::PgConnection;
 use dotenv::dotenv;
 
+use crate::domains::auth::dto::auth_dto::Auth;
 use crate::domains::auth::dto::auth_dto::NewAuth;
 use crate::domains::auth::services::jwt_service::create_tokens;
 use crate::schema::auths;
@@ -46,4 +47,15 @@ pub fn make_token_invalid_by_user_id(conn: &mut PgConnection, user_id: &i32) -> 
         .set(auths::is_valid.eq(false))
         .execute(conn)
         .expect("Error updating auth")
+}
+
+pub fn get_auth_by_token(conn: &mut PgConnection, token: &str) -> Option<Auth> {
+    let auth: Option<Auth> = auths::table
+        .filter(auths::access_token.eq(token))
+        .filter(auths::is_valid.eq(true))
+        .first::<Auth>(conn)
+        .optional()
+        .expect("Error loading auth");
+
+    auth
 }

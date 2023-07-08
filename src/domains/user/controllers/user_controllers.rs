@@ -1,42 +1,48 @@
+use actix_http::HttpMessage;
 use actix_web::{delete, get, put, web, HttpRequest, HttpResponse, Responder};
 
 use crate::{
     database::postgres_pool::Db,
     domains::{
-        auth::services::{auth_service::AuthService, jwt_service::decode_access_token},
-        user::{dto::new_user_dto::NewUser, services::user_service::UserService},
+        auth::services::{
+            auth_service::AuthService,
+            jwt_service::{decode_access_token, Claims},
+        },
+        user::{dto::user_dto::UpdateUser, services::user_service::UserService},
     },
-    errors::base_error_messages::BaseError,
+    errors::base_error_messages::{BaseError, BaseErrorMessages},
 };
 
 #[get("/me")]
 async fn get_me(req: HttpRequest) -> Result<impl Responder, BaseError> {
-    let auth_header = req.headers().get("Authorization");
-    let auth_header = match auth_header {
-        Some(auth_header) => auth_header.to_str().unwrap(),
-        None => return Err(BaseError::Unauthorized),
+    let claims = req.extensions();
+    let claims = claims.get::<Claims>();
+
+    // Check if claims exist and get the user_id
+
+    let claims = match claims {
+        Some(claims) => claims,
+        None => {
+            return Err(BaseError::NotFound(BaseErrorMessages::new(
+                "User not found".to_string(),
+                1,
+            )))
+        }
     };
 
-    // get the token from the header using actix web HttpRequest
-    let token = auth_header.trim_start_matches("Bearer ");
-
-    // secret is env.ACCESS_TOKEN_SECRET
-    let secret = std::env::var("ACCESS_TOKEN_SECRET");
-    let secret = match secret {
-        Ok(secret) => secret,
-        Err(_) => return Err(BaseError::Unauthorized),
-    };
+    let user_id = claims.user_id;
 
     let mut conn = Db::connect_to_db();
-    let claim = decode_access_token(token, secret);
-    let claim = match claim {
-        Ok(claim) => claim,
-        Err(_) => return Err(BaseError::Unauthorized),
-    };
+
     let mut service = UserService::new(&mut conn);
-    let user = service.read_one_user(claim.user_id);
+    let user = service.read_one_user(user_id);
     user.map_or_else(
-        || Err(BaseError::NotFound("User not found".to_string())),
+        || {
+            Err(BaseError::NotFound(BaseErrorMessages::new(
+                "User not found".to_string(),
+                1,
+            )))
+        },
         |user| Ok(HttpResponse::Ok().json(user)),
     )
 }
@@ -44,34 +50,28 @@ async fn get_me(req: HttpRequest) -> Result<impl Responder, BaseError> {
 #[put("/me")]
 async fn update_me(
     req: HttpRequest,
-    new_user: web::Json<NewUser>,
+    update_user: web::Json<UpdateUser>,
 ) -> Result<impl Responder, BaseError> {
-    let auth_header = req.headers().get("Authorization");
-    let auth_header = match auth_header {
-        Some(auth_header) => auth_header.to_str().unwrap(),
-        None => return Err(BaseError::Unauthorized),
+    let claims = req.extensions();
+    let claims = claims.get::<Claims>();
+
+    // Check if claims exist and get the user_id
+
+    let claims = match claims {
+        Some(claims) => claims,
+        None => {
+            return Err(BaseError::NotFound(BaseErrorMessages::new(
+                "User not found".to_string(),
+                1,
+            )))
+        }
     };
 
-    // get the token from the header using actix web HttpRequest
-    let token = auth_header.trim_start_matches("Bearer ");
-
-    // secret is env.ACCESS_TOKEN_SECRET
-    let secret = std::env::var("ACCESS_TOKEN_SECRET");
-    let secret = match secret {
-        Ok(secret) => secret,
-        Err(_) => return Err(BaseError::Unauthorized),
-    };
-
+    let user_id = claims.user_id;
     let mut conn = Db::connect_to_db();
-    let claim = decode_access_token(token, secret);
-    let claim = match claim {
-        Ok(claim) => claim,
-        Err(_) => return Err(BaseError::Unauthorized),
-    };
     let mut service = UserService::new(&mut conn);
     //get new User from request body
-
-    let user = service.update_user(claim.user_id, &new_user);
+    let user = service.update_user(user_id, &update_user);
     Ok(HttpResponse::Ok().json(user))
 }
 
