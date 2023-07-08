@@ -3,6 +3,7 @@ use std::env;
 use diesel::prelude::*;
 use diesel::PgConnection;
 use dotenv::dotenv;
+use log::debug;
 
 use crate::domains::auth::dto::auth_dto::Auth;
 use crate::domains::auth::dto::auth_dto::NewAuth;
@@ -50,9 +51,11 @@ pub fn make_token_invalid_by_user_id(conn: &mut PgConnection, user_id: &i32) -> 
 }
 
 pub fn get_auth_by_token(conn: &mut PgConnection, token: &str) -> Option<Auth> {
+
     let auth: Option<Auth> = auths::table
         .filter(auths::access_token.eq(token))
         .filter(auths::is_valid.eq(true))
+        .filter(auths::expiration.gt(chrono::Utc::now().naive_utc()))
         .first::<Auth>(conn)
         .optional()
         .expect("Error loading auth");
