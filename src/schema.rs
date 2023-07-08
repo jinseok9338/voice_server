@@ -3,9 +3,9 @@
 diesel::table! {
     auths (id) {
         id -> Int4,
-        user_id -> Int4,
         access_token -> Text,
         refresh_token -> Text,
+        user_id -> Int4,
         created_at -> Nullable<Timestamptz>,
         is_valid -> Bool,
         expiration -> Nullable<Timestamptz>,
@@ -37,6 +37,7 @@ diesel::table! {
         user_image -> Nullable<Text>,
         created_at -> Nullable<Timestamptz>,
         updated_at -> Nullable<Timestamptz>,
+        tester -> Nullable<Bool>,
     }
 }
 

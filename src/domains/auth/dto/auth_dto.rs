@@ -9,9 +9,9 @@ use crate::schema::auths;
 pub struct Auth {
     // Add fields here
     pub id: i32,
-    pub user_id: i32,
     pub access_token: String,
     pub refresh_token: String,
+    pub user_id: i32,
     pub created_at: Option<NaiveDateTime>,
     pub is_valid: bool,
     pub expiration: Option<NaiveDateTime>,

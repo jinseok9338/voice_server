@@ -1,8 +1,8 @@
-// this is where the basic CRUD operations are defineduse diesel::prelude::*;
 use crate::{
-    domains::user::dto::{new_user_dto::NewUser, user_dto::User},
+    domains::user::dto::user_dto::{NewUser, UpdateUser, User, UserWithOutPassword},
     schema::users,
 };
+use chrono::Utc;
 use diesel::{
     query_dsl::methods::OrderDsl, ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl,
 };
@@ -20,8 +20,21 @@ pub fn _read(conn: &mut PgConnection) -> Vec<User> {
         .expect("Error reading users")
 }
 
-pub fn read_one(conn: &mut PgConnection, id: i32) -> Option<User> {
-    users::table.find(id).first(conn).ok()
+pub fn read_one(conn: &mut PgConnection, id: i32) -> Option<UserWithOutPassword> {
+    let user: Option<User> = users::table.find(id).first(conn).ok();
+    match user {
+        Some(user) => Some(UserWithOutPassword {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            last_login_at: user.last_login_at,
+            user_image: user.user_image,
+            created_at: user.created_at,
+            updated_at: user.updated_at,
+            tester: user.tester,
+        }),
+        None => None,
+    }
 }
 
 pub fn read_one_user_by_name(conn: &mut PgConnection, user_name: &str) -> Option<User> {
@@ -31,11 +44,30 @@ pub fn read_one_user_by_name(conn: &mut PgConnection, user_name: &str) -> Option
         .ok()
 }
 
-pub fn update_one(conn: &mut PgConnection, id: i32, user: &NewUser) -> User {
-    diesel::update(users::table.find(id))
+pub fn update_one(conn: &mut PgConnection, id: i32, user: &UpdateUser) -> UserWithOutPassword {
+    let user = UpdateUser {
+        username: user.username.to_string(),
+        email: user.email.to_string(),
+        user_image: user.user_image.to_owned(),
+        updated_at: Some(Utc::now().naive_utc()),
+        last_login_at: user.last_login_at,
+    };
+
+    let updated_user: User = diesel::update(users::table.find(id))
         .set(user)
         .get_result(conn)
-        .expect("Error updating user")
+        .expect("Error updating user");
+
+    UserWithOutPassword {
+        id: updated_user.id,
+        username: updated_user.username,
+        email: updated_user.email,
+        last_login_at: updated_user.last_login_at,
+        user_image: updated_user.user_image,
+        created_at: updated_user.created_at,
+        updated_at: updated_user.updated_at,
+        tester: updated_user.tester,
+    }
 }
 
 pub fn delete_one(conn: &mut PgConnection, id: i32) -> usize {

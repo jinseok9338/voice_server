@@ -5,14 +5,14 @@ use crate::{
             dto::auth_dto::{AuthRequest, AuthResponse},
             services::{
                 auth_service::AuthService, database::auth_database::make_token_invalid_by_user_id,
-                jwt_service::decode_access_token,
+                jwt_service::Claims,
             },
         },
-        user::{dto::new_user_dto::NewUser, services::user_service::UserService},
+        user::{dto::user_dto::NewUser, services::user_service::UserService},
     },
-    errors::base_error_messages::BaseError,
+    errors::base_error_messages::{BaseError, BaseErrorMessages},
 };
-use actix_web::{post, put, web, HttpRequest, HttpResponse, Responder};
+use actix_web::{post, put, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use bcrypt::{hash, verify};
 use chrono::Utc;
 
@@ -22,7 +22,9 @@ use serde_json::json;
 async fn login(auth: web::Json<AuthRequest>) -> Result<impl Responder, BaseError> {
     let mut conn = Db::connect_to_db();
     let mut user_service = UserService::new(&mut conn);
+
     let user = user_service.read_one_user_by_user_name(&auth.username);
+
     match user {
         Some(user) => {
             if verify(
@@ -31,7 +33,12 @@ async fn login(auth: web::Json<AuthRequest>) -> Result<impl Responder, BaseError
             )
             .expect("Error verifying password")
             {
+                match user_service.update_last_login_at(&auth.username) {
+                    Ok(_) => {}
+                    Err(_) => return Err(BaseError::InternalServerError),
+                }
                 let mut auth_service = AuthService::new(&mut conn);
+
                 auth_service.invalidate_token(&user.id);
                 let auth_response = auth_service.generate_token(&user.id);
 
@@ -44,31 +51,35 @@ async fn login(auth: web::Json<AuthRequest>) -> Result<impl Responder, BaseError
                 Err(BaseError::Unauthorized)
             }
         }
-        None => Err(BaseError::NotFound("User not found".to_string())),
+        None => Err(BaseError::NotFound(BaseErrorMessages::new(
+            "User not found".to_string(),
+            1,
+        ))),
     }
 }
 
 #[put("/token")]
 async fn logout(req: HttpRequest) -> Result<impl Responder, BaseError> {
-    let auth_header = req.headers().get("Authorization");
-    let auth_header = match auth_header {
-        Some(auth_header) => auth_header.to_str().unwrap(),
-        None => return Err(BaseError::Unauthorized),
+    // Access the claims from the request extensions
+    let claims = req.extensions();
+    let claims = claims.get::<Claims>();
+
+    // Check if claims exist and get the user_id
+
+    let claims = match claims {
+        Some(claims) => claims,
+        None => {
+            return Err(BaseError::NotFound(BaseErrorMessages::new(
+                "User not found".to_string(),
+                1,
+            )))
+        }
     };
 
-    // get the token from the header using actix web HttpRequest
-    let token = auth_header.trim_start_matches("Bearer ");
-
-    // secret is env.ACCESS_TOKEN_SECRET
-    let secret = std::env::var("ACCESS_TOKEN_SECRET");
-    let secret = match secret {
-        Ok(secret) => secret,
-        Err(_) => return Err(BaseError::Unauthorized),
-    };
+    let user_id = claims.user_id;
 
     let mut conn = Db::connect_to_db();
-    let claim = decode_access_token(token, secret).expect("Error decoding token");
-    make_token_invalid_by_user_id(&mut conn, &claim.user_id);
+    make_token_invalid_by_user_id(&mut conn, &user_id);
 
     Ok(HttpResponse::Ok().json(json!({"message": "Logout successful"})))
 }
@@ -82,7 +93,10 @@ async fn signup(user: web::Json<NewUser>) -> Result<impl Responder, BaseError> {
     let mut auth_service = AuthService::new(&mut auth_service_conn);
     let user_exists = user_service.read_one_user_by_user_name(&user.username);
     match user_exists {
-        Some(_) => Err(BaseError::Conflict("User already exists".to_string())),
+        Some(_) => Err(BaseError::Conflict(BaseErrorMessages::new(
+            "User already exists".to_string(),
+            2,
+        ))),
         None => {
             let hashed_password = hash(&user.password, 12).expect("Error hashing password");
             let new_user = NewUser {
