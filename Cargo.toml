@@ -26,5 +26,9 @@ futures-util = "0.3.28"
 tracing-actix-web = "0.7.5"
 actix-cors = "0.6.4"
 rustfmt = "0.10.0"
+redis = "0.23.0"
+openai-rs = "0.1.1"
+
+
 
 
