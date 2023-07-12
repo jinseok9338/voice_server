@@ -1,5 +1,11 @@
 // @generated automatically by Diesel CLI.
 
+pub mod sql_types {
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "chat_type_enum"))]
+    pub struct ChatTypeEnum;
+}
+
 diesel::table! {
     auths (id) {
         id -> Int4,
@@ -28,6 +34,9 @@ diesel::table! {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::ChatTypeEnum;
+
     chat_rooms (id) {
         id -> Int4,
         created_at -> Timestamp,
@@ -38,6 +47,7 @@ diesel::table! {
         #[max_length = 255]
         last_message -> Nullable<Varchar>,
         last_sent_user_id -> Nullable<Int4>,
+        chat_type -> ChatTypeEnum,
     }
 }
 

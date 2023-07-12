@@ -14,12 +14,16 @@ impl BaseErrorMessages {
     }
 }
 
+#[derive(Debug, Serialize)]
+struct DatabaseErrorWrapper(String);
+
 #[derive(Debug)]
 pub enum BaseError {
     NotFound(BaseErrorMessages),
     InternalServerError,
     Unauthorized,
     Conflict(BaseErrorMessages),
+    DatabaseError(diesel::result::Error),
     // add other error types here
 }
 
@@ -30,6 +34,7 @@ impl fmt::Display for BaseError {
             Self::InternalServerError => write!(f, "{:?}", self),
             Self::Unauthorized => write!(f, "{:?}", self),
             Self::Conflict(msg) => write!(f, "Conflict: {:?}", msg),
+            Self::DatabaseError(err) => write!(f, "Database error: {:?}", err),
             // add other error types here
         }
     }
@@ -41,10 +46,16 @@ impl ResponseError for BaseError {
             Self::NotFound(msg) => HttpResponse::NotFound().json(msg),
             Self::InternalServerError => HttpResponse::InternalServerError().json(
                 BaseErrorMessages::new("Internal server error".to_string(), 1),
-            ), // add other error types here
+            ),
             Self::Unauthorized => HttpResponse::Unauthorized()
                 .json(BaseErrorMessages::new("Unauthorized".to_string(), 1)),
             Self::Conflict(msg) => HttpResponse::Conflict().json(msg),
+            Self::DatabaseError(err) => {
+                let error_message = format!("{:?}", err);
+                let wrapper = DatabaseErrorWrapper(error_message);
+                HttpResponse::InternalServerError().json(wrapper)
+            }
+            // add other error types here
         }
     }
 }

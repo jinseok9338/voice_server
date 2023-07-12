@@ -1,4 +1,5 @@
 -- Create chat_rooms table
+-- Create chat_rooms table with chat_type enum
 CREATE TABLE chat_rooms (
   id SERIAL PRIMARY KEY,
   created_at TIMESTAMP NOT NULL,
@@ -7,10 +8,12 @@ CREATE TABLE chat_rooms (
   name VARCHAR(255) NOT NULL,
   last_message VARCHAR(255),
   last_sent_user_id INT,
+  chat_type chat_type_enum NOT NULL, -- Add chat_type column as enum
   FOREIGN KEY (last_sent_user_id) REFERENCES users(id)
 );
 
--- Create messages table
+-- Define chat_type_enum enum type
+CREATE TYPE chat_type_enum AS ENUM ('PRIVATE', 'GROUP', 'ALONE');
 CREATE TABLE messages (
   id SERIAL PRIMARY KEY,
   chat_room_id INT NOT NULL,
