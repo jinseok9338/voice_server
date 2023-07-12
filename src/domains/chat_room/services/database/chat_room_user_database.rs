@@ -1,12 +1,9 @@
 use diesel::prelude::*;
 use diesel::PgConnection;
 
-
 use crate::domains::chat_room::dto::chat_room_user_dto::ChatRoomUserDatabase;
 use crate::errors::base_error_messages::BaseError;
 use crate::schema::user_chat_room;
-
-
 
 pub fn create_chat_rooms(
     conn: &mut PgConnection,

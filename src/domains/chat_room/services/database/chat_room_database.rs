@@ -12,4 +12,3 @@ pub fn create(conn: &mut PgConnection, chat_room: &NewChatRoom) -> ChatRoom {
         .get_result(conn)
         .expect("Error saving new chat room")
 }
-
