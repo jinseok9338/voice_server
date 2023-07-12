@@ -5,8 +5,8 @@
 //     }
 // }
 
-use diesel::{Insertable, AsChangeset, Queryable};
-use serde_derive::{Serialize, Deserialize};
+use diesel::{AsChangeset, Insertable, Queryable};
+use serde_derive::{Deserialize, Serialize};
 
 use crate::schema::user_chat_room;
 

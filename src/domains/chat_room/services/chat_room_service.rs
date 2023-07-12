@@ -14,7 +14,6 @@ impl<'a> ChatRoomService<'a> {
     }
 
     pub fn create_chat_room(&mut self, chat_room: &NewChatRoom) -> ChatRoom {
-
         create(self.conn, chat_room)
     }
 

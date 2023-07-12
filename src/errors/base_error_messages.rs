@@ -54,8 +54,7 @@ impl ResponseError for BaseError {
                 let error_message = format!("{:?}", err);
                 let wrapper = DatabaseErrorWrapper(error_message);
                 HttpResponse::InternalServerError().json(wrapper)
-            }
-            // add other error types here
+            } // add other error types here
         }
     }
 }
