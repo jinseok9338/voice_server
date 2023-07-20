@@ -1,14 +1,40 @@
 use diesel::prelude::*;
 use diesel::PgConnection;
+use uuid::Uuid;
 
 use crate::domains::chat_room::dto::chat_room_dto::ChatRoom;
-use crate::domains::chat_room::dto::chat_room_dto::NewChatRoom;
+
 use crate::schema::chat_rooms;
 
-pub fn create(conn: &mut PgConnection, chat_room: &NewChatRoom) -> ChatRoom {
-    // Implement your create logic here
+pub fn create(conn: &mut PgConnection, chat_room: &ChatRoom) -> ChatRoom {
     diesel::insert_into(chat_rooms::table)
         .values(chat_room)
         .get_result(conn)
         .expect("Error saving new chat room")
+}
+
+pub fn read_all_by_chat_room_ids(
+    conn: &mut PgConnection,
+    chat_room_ids: Vec<Uuid>,
+) -> Vec<ChatRoom> {
+    chat_rooms::table
+        .filter(chat_rooms::id.eq_any(chat_room_ids))
+        .load::<ChatRoom>(conn)
+        .expect("Error loading chat rooms")
+}
+
+pub fn read_one(conn: &mut PgConnection, id: Uuid) -> Option<ChatRoom> {
+    chat_rooms::table
+        .find(id)
+        .first(conn)
+        .optional()
+        .expect("Error loading chat room")
+}
+
+pub fn update(conn: &mut PgConnection, chat_room: &ChatRoom) -> ChatRoom {
+    diesel::update(chat_rooms::table)
+        .filter(chat_rooms::id.eq(chat_room.id))
+        .set(chat_room)
+        .get_result(conn)
+        .expect("Error updating chat room")
 }

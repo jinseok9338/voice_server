@@ -21,6 +21,7 @@ struct DatabaseErrorWrapper(String);
 pub enum BaseError {
     NotFound(BaseErrorMessages),
     InternalServerError,
+    BadRequest(BaseErrorMessages),
     Unauthorized,
     Conflict(BaseErrorMessages),
     DatabaseError(diesel::result::Error),
@@ -35,6 +36,7 @@ impl fmt::Display for BaseError {
             Self::Unauthorized => write!(f, "{:?}", self),
             Self::Conflict(msg) => write!(f, "Conflict: {:?}", msg),
             Self::DatabaseError(err) => write!(f, "Database error: {:?}", err),
+            Self::BadRequest(msg) => write!(f, "Bad request: {:?}", msg),
             // add other error types here
         }
     }
@@ -55,6 +57,7 @@ impl ResponseError for BaseError {
                 let wrapper = DatabaseErrorWrapper(error_message);
                 HttpResponse::InternalServerError().json(wrapper)
             } // add other error types here
+            Self::BadRequest(msg) => HttpResponse::BadRequest().json(msg),
         }
     }
 }

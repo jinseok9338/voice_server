@@ -8,7 +8,7 @@ use crate::{
                 jwt_service::Claims,
             },
         },
-        user::{dto::user_dto::NewUser, services::user_service::UserService},
+        user::{dto::user_dto::User, services::user_service::UserService},
     },
     errors::base_error_messages::{BaseError, BaseErrorMessages},
 };
@@ -85,7 +85,7 @@ async fn logout(req: HttpRequest) -> Result<impl Responder, BaseError> {
 }
 
 #[post("/signup")]
-async fn signup(user: web::Json<NewUser>) -> Result<impl Responder, BaseError> {
+async fn signup(user: web::Json<User>) -> Result<impl Responder, BaseError> {
     let mut user_service_conn = Db::connect_to_db();
     let mut auth_service_conn = Db::connect_to_db();
 
@@ -98,14 +98,21 @@ async fn signup(user: web::Json<NewUser>) -> Result<impl Responder, BaseError> {
             2,
         ))),
         None => {
-            let hashed_password = hash(&user.password, 12).expect("Error hashing password");
-            let new_user = NewUser {
-                username: user.username.clone(),
-                password: hashed_password,
-                email: user.email.clone(),
-                last_login_at: Some(Utc::now().naive_utc()),
-                user_image: user.user_image.clone(),
-            };
+            let password = user.password.as_ref().ok_or_else(|| {
+                BaseError::BadRequest(BaseErrorMessages::new(
+                    "Password not provided".to_string(),
+                    1,
+                ))
+            })?;
+            let hashed_password = hash(password, 12).expect("Error hashing password");
+
+            let new_user = User::new(
+                user.username.clone(),
+                hashed_password,
+                user.email.clone(),
+                user.user_image.clone(),
+            );
+
             let created_user = user_service.create_user(&new_user);
             let auth_response = auth_service.generate_token(&created_user.id);
             Ok(HttpResponse::Ok().json(AuthResponse {

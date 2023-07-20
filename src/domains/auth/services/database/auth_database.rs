@@ -1,14 +1,15 @@
 use std::env;
 
 use crate::domains::auth::dto::auth_dto::Auth;
-use crate::domains::auth::dto::auth_dto::NewAuth;
+
 use crate::domains::auth::services::jwt_service::create_tokens;
 use crate::schema::auths;
 use diesel::prelude::*;
 use diesel::PgConnection;
 use dotenv::dotenv;
+use uuid::Uuid;
 
-pub fn create(conn: &mut PgConnection, user_id: &i32) -> NewAuth {
+pub fn create(conn: &mut PgConnection, user_id: &Uuid) -> Auth {
     // Load environment variables from .env file
     dotenv().ok();
 
@@ -21,15 +22,14 @@ pub fn create(conn: &mut PgConnection, user_id: &i32) -> NewAuth {
         .expect("EXPIRATION_TIME must be a valid integer");
 
     let tokens = create_tokens(*user_id, secret);
-
-    let new_auth = NewAuth {
-        user_id: user_id.to_owned(),
-        access_token: tokens.0,
-        refresh_token: tokens.1,
-        expiration: Some(chrono::Utc::now().naive_utc() + chrono::Duration::seconds(expiration)),
-        is_valid: true,
-        auth_provider: "EMAIL".to_string(),
-    };
+    let new_auth = Auth::new(
+        tokens.0,
+        tokens.1,
+        Some(user_id.to_owned()),
+        Some(chrono::Utc::now().naive_utc()),
+        true,
+        "EMAIL".to_string(),
+    );
 
     diesel::insert_into(auths::table)
         .values(&new_auth)
@@ -41,7 +41,7 @@ pub fn create(conn: &mut PgConnection, user_id: &i32) -> NewAuth {
     new_auth
 }
 
-pub fn make_token_invalid_by_user_id(conn: &mut PgConnection, user_id: &i32) -> usize {
+pub fn make_token_invalid_by_user_id(conn: &mut PgConnection, user_id: &Uuid) -> usize {
     diesel::update(auths::table.filter(auths::user_id.eq(user_id)))
         .set(auths::is_valid.eq(false))
         .execute(conn)

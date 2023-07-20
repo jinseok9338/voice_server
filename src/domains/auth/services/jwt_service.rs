@@ -1,13 +1,14 @@
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub user_id: i32,
+    pub user_id: Uuid,
     pub exp: usize,
 }
 
-pub fn create_tokens(user_id: i32, secret: String) -> (String, String) {
+pub fn create_tokens(user_id: Uuid, secret: String) -> (String, String) {
     let header = Header::new(Algorithm::HS256);
 
     let secret = secret.as_bytes();

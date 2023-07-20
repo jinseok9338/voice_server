@@ -8,14 +8,14 @@ pub mod sql_types {
 
 diesel::table! {
     auths (id) {
-        id -> Int4,
         access_token -> Text,
         refresh_token -> Text,
-        user_id -> Int4,
         created_at -> Nullable<Timestamptz>,
         is_valid -> Bool,
         expiration -> Nullable<Timestamptz>,
         auth_provider -> Text,
+        user_id -> Nullable<Uuid>,
+        id -> Uuid,
     }
 }
 
@@ -38,7 +38,6 @@ diesel::table! {
     use super::sql_types::ChatTypeEnum;
 
     chat_rooms (id) {
-        id -> Int4,
         created_at -> Timestamp,
         updated_at -> Timestamp,
         deleted_at -> Nullable<Timestamp>,
@@ -46,33 +45,34 @@ diesel::table! {
         name -> Varchar,
         #[max_length = 255]
         last_message -> Nullable<Varchar>,
-        last_sent_user_id -> Nullable<Int4>,
         chat_type -> ChatTypeEnum,
+        id -> Uuid,
+        last_sent_user_id -> Nullable<Uuid>,
     }
 }
 
 diesel::table! {
     messages (id) {
-        id -> Int4,
-        chat_room_id -> Int4,
-        sent_by -> Int4,
         #[max_length = 255]
         message -> Varchar,
         sent_at -> Timestamp,
         deleted_at -> Nullable<Timestamp>,
+        id -> Uuid,
+        chat_room_id -> Nullable<Uuid>,
+        sent_by -> Nullable<Uuid>,
     }
 }
 
 diesel::table! {
-    user_chat_room (user_id, chat_room_id) {
-        user_id -> Int4,
-        chat_room_id -> Int4,
+    user_chat_room (id) {
+        user_id -> Nullable<Uuid>,
+        chat_room_id -> Nullable<Uuid>,
+        id -> Uuid,
     }
 }
 
 diesel::table! {
     users (id) {
-        id -> Int4,
         username -> Text,
         password -> Nullable<Text>,
         email -> Text,
@@ -81,15 +81,9 @@ diesel::table! {
         created_at -> Nullable<Timestamptz>,
         updated_at -> Nullable<Timestamptz>,
         tester -> Nullable<Bool>,
+        id -> Uuid,
     }
 }
-
-diesel::joinable!(auths -> users (user_id));
-diesel::joinable!(chat_rooms -> users (last_sent_user_id));
-diesel::joinable!(messages -> chat_rooms (chat_room_id));
-diesel::joinable!(messages -> users (sent_by));
-diesel::joinable!(user_chat_room -> chat_rooms (chat_room_id));
-diesel::joinable!(user_chat_room -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     auths,

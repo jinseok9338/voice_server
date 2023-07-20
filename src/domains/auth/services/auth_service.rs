@@ -1,4 +1,5 @@
 use diesel::pg::PgConnection;
+use uuid::Uuid;
 
 use crate::domains::auth::dto::auth_dto::{Auth, AuthResponse};
 
@@ -13,7 +14,7 @@ impl<'a> AuthService<'a> {
         Self { conn }
     }
 
-    pub fn generate_token(&mut self, user_id: &i32) -> AuthResponse {
+    pub fn generate_token(&mut self, user_id: &Uuid) -> AuthResponse {
         let auth = create(self.conn, user_id);
 
         AuthResponse {
@@ -26,7 +27,7 @@ impl<'a> AuthService<'a> {
         }
     }
 
-    pub fn invalidate_token(&mut self, user_id: &i32) -> usize {
+    pub fn invalidate_token(&mut self, user_id: &Uuid) -> usize {
         make_token_invalid_by_user_id(self.conn, user_id)
     }
 
