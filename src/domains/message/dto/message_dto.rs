@@ -33,6 +33,7 @@ impl Message {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NewMessage {
     pub message: String,
 }

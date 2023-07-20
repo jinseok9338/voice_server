@@ -7,6 +7,7 @@ use uuid::Uuid;
 use crate::schema::users::{self};
 
 #[derive(QueryableByName, Queryable, Insertable, AsChangeset, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[diesel(table_name = users)]
 pub struct User {
     #[sql_type = "Text"]
@@ -31,6 +32,7 @@ pub struct User {
 
 #[derive(QueryableByName, Insertable, AsChangeset, Serialize, Deserialize)]
 #[diesel(table_name = users)]
+#[serde(rename_all = "camelCase")]
 pub struct UserWithOutPassword {
     pub username: String,
     pub email: String,
@@ -97,6 +99,7 @@ impl User {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UserRequest {
     pub username: Option<String>,
     pub email: Option<String>,

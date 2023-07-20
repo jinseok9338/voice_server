@@ -67,6 +67,7 @@ pub struct UpdateChatRoomRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NewChatRoomRequest {
     pub name: String,
     pub user_ids: Vec<Uuid>,
