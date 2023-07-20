@@ -19,11 +19,11 @@ pub struct Message {
 }
 
 impl Message {
-    pub fn new( chat_room_id: Uuid, message: String, sent_by: Uuid) -> Self {
+    pub fn new(chat_room_id: Uuid, message: String, sent_by: Uuid) -> Self {
         let now = chrono::offset::Utc::now().naive_utc();
         Self {
             message,
-            sent_at:now ,
+            sent_at: now,
             deleted_at: None,
             id: Uuid::new_v4(), // this should be uuid
             chat_room_id: Some(chat_room_id),
@@ -34,7 +34,6 @@ impl Message {
 
 #[derive(Serialize, Deserialize)]
 pub struct NewMessage {
-
     pub message: String,
 }
 
