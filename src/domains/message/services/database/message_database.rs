@@ -60,11 +60,7 @@ pub fn create_message_to_database(
     new_message: &NewMessage,
     user_id: Uuid,
 ) -> Message {
-    let new_message = Message::new(
-        chat_room_id,
-        new_message.message.clone(),
-        user_id,
-    );
+    let new_message = Message::new(chat_room_id, new_message.message.clone(), user_id);
     let message = diesel::insert_into(crate::schema::messages::table)
         .values(&new_message)
         .get_result::<Message>(conn)

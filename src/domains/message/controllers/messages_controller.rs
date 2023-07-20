@@ -1,5 +1,5 @@
 use actix_http::HttpMessage;
-use actix_web::{get, post, web, Responder, HttpRequest};
+use actix_web::{get, post, web, HttpRequest, Responder};
 
 use uuid::Uuid;
 
