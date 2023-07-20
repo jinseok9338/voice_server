@@ -65,6 +65,7 @@ pub struct AuthResponse {
     pub expiration: NaiveDateTime,
 }
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AuthRequest {
     pub username: String,
     pub password: String,
