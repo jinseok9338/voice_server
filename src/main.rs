@@ -8,6 +8,7 @@ pub mod schema;
 use crate::database::redis::create_redis_client;
 
 use crate::domains::chat_room::controllers::chat_room_controller;
+use crate::domains::message::controllers::messages_controller;
 use crate::domains::{auth::controllers::auth_controller, user::controllers::user_controllers};
 use crate::middleware::auth_middleware::AuthMiddleware;
 
@@ -43,7 +44,16 @@ async fn main() -> std::io::Result<()> {
                     .service(user_controllers::get_me)
                     .service(user_controllers::update_me),
             )
-            .service(web::scope("chats").service(chat_room_controller::create_chat_room))
+            .service(
+                web::scope("chats")
+                    .service(chat_room_controller::create_chat_room)
+                    .service(chat_room_controller::get_chat_rooms),
+            )
+            .service(
+                web::scope("messages")
+                    .service(messages_controller::get_chat_rooms_messages)
+                    .service(messages_controller::create_message),
+            )
     })
     .bind(("127.0.0.1", 8080))?
     .run()

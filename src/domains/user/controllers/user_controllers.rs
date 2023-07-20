@@ -8,7 +8,10 @@ use crate::{
             auth_service::AuthService,
             jwt_service::{decode_access_token, Claims},
         },
-        user::{dto::user_dto::UpdateUser, services::user_service::UserService},
+        user::{
+            dto::user_dto::{User, UserRequest},
+            services::user_service::UserService,
+        },
     },
     errors::base_error_messages::{BaseError, BaseErrorMessages},
 };
@@ -50,7 +53,7 @@ async fn get_me(req: HttpRequest) -> Result<impl Responder, BaseError> {
 #[put("/me")]
 async fn update_me(
     req: HttpRequest,
-    update_user: web::Json<UpdateUser>,
+    update_user: web::Json<UserRequest>,
 ) -> Result<impl Responder, BaseError> {
     let claims = req.extensions();
     let claims = claims.get::<Claims>();
@@ -70,8 +73,24 @@ async fn update_me(
     let user_id = claims.user_id;
     let mut conn = Db::connect_to_db();
     let mut service = UserService::new(&mut conn);
-    //get new User from request body
-    let user = service.update_user(user_id, &update_user);
+    let existing_user = service.reat_one_user_by_id(user_id);
+    let existing_user = match existing_user {
+        Some(existing_user) => existing_user,
+        None => {
+            return Err(BaseError::NotFound(BaseErrorMessages::new(
+                "User not found".to_string(),
+                1,
+            )))
+        }
+    };
+    let updated_user = User::updated_user(
+        &existing_user,
+        update_user.username.clone(),
+        update_user.email.clone(),
+        update_user.last_login_at,
+        update_user.user_image.clone(),
+    );
+    let user = service.update_user(user_id, &updated_user);
     Ok(HttpResponse::Ok().json(user))
 }
 
