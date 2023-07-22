@@ -28,6 +28,8 @@ actix-cors = "0.6.4"
 rustfmt = "0.10.0"
 redis = "0.23.0"
 openai-rs = "0.1.1"
+actix-web-actors = "4.2.0"
+actix = "0.13.0"
 
 [dependencies.uuid]
 version = "1.4.1"

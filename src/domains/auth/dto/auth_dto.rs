@@ -70,3 +70,10 @@ pub struct AuthRequest {
     pub username: String,
     pub password: String,
 }
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReissueRequest {
+    pub access_token: String,
+    pub refresh_token: String,
+}

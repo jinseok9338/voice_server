@@ -17,6 +17,11 @@ pub(crate) const AUTH_MIDDLEWARE_CHECK_PATHS: &[CheckPath<'static>] = &[
         skip_check: false,
     },
     CheckPath {
+        path: "/auth/token/reissue",
+        method: "PUT",
+        skip_check: true,
+    },
+    CheckPath {
         path: "/users/me",
         method: "GET",
         skip_check: false,
