@@ -2,7 +2,7 @@ use crate::{
     database::postgres_pool::Db,
     domains::{
         auth::{
-            dto::auth_dto::{AuthRequest, AuthResponse},
+            dto::auth_dto::{Auth, AuthRequest, AuthResponse, ReissueRequest},
             services::{
                 auth_service::AuthService, database::auth_database::make_token_invalid_by_user_id,
                 jwt_service::Claims,
@@ -14,7 +14,6 @@ use crate::{
 };
 use actix_web::{post, put, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use bcrypt::{hash, verify};
-use chrono::Utc;
 
 use serde_json::json;
 
@@ -63,9 +62,6 @@ async fn logout(req: HttpRequest) -> Result<impl Responder, BaseError> {
     // Access the claims from the request extensions
     let claims = req.extensions();
     let claims = claims.get::<Claims>();
-
-    // Check if claims exist and get the user_id
-
     let claims = match claims {
         Some(claims) => claims,
         None => {
@@ -82,6 +78,44 @@ async fn logout(req: HttpRequest) -> Result<impl Responder, BaseError> {
     make_token_invalid_by_user_id(&mut conn, &user_id);
 
     Ok(HttpResponse::Ok().json(json!({"message": "Logout successful"})))
+}
+
+#[put("/token/reissue")]
+async fn reissue_token(
+    _req: HttpRequest,
+    data: web::Json<ReissueRequest>,
+) -> Result<impl Responder, BaseError> {
+    let mut auth_conn = Db::connect_to_db();
+    let mut user_conn = Db::connect_to_db();
+    let mut auth_service = AuthService::new(&mut auth_conn);
+    let mut user_service = UserService::new(&mut user_conn);
+
+    let user_auth: Option<Auth> = auth_service.get_auth_by_refresh_token(&data.refresh_token);
+    match user_auth {
+        // if user generate new Token associated with user_id
+        Some(user_auth) => {
+            let user = user_service.read_one_user(user_auth.user_id.unwrap());
+            match user {
+                Some(user) => {
+                    auth_service.invalidate_token(&user.id);
+                    let auth_response = auth_service.generate_token(&user.id);
+                    Ok(HttpResponse::Ok().json(AuthResponse {
+                        access_token: auth_response.access_token,
+                        refresh_token: auth_response.refresh_token,
+                        expiration: auth_response.expiration,
+                    }))
+                }
+                None => Err(BaseError::NotFound(BaseErrorMessages::new(
+                    "User not found".to_string(),
+                    1,
+                ))),
+            }
+        }
+        None => Err(BaseError::NotFound(BaseErrorMessages::new(
+            "User not found".to_string(),
+            1,
+        ))),
+    }
 }
 
 #[post("/signup")]

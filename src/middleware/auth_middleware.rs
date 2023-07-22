@@ -3,7 +3,7 @@ use actix_service::{Service, Transform};
 use actix_web::dev::{ServiceRequest, ServiceResponse};
 
 use actix_web::error::ErrorUnauthorized;
-use actix_web::{Error, HttpMessage};
+use actix_web::{Error, HttpMessage, HttpResponse};
 use futures::future::{ok, Ready};
 use futures::task::{Context, Poll};
 use futures::Future;
@@ -15,7 +15,7 @@ use crate::database::postgres_pool::Db;
 
 use crate::domains::auth::services::auth_service::AuthService;
 use crate::domains::auth::services::jwt_service::Claims;
-use crate::errors::base_error_messages::BaseError;
+use crate::errors::base_error_messages::{BaseError, BaseErrorMessages};
 
 use super::consts::AUTH_MIDDLEWARE_CHECK_PATHS;
 
@@ -59,6 +59,37 @@ where
     fn call(self: &Self, req: ServiceRequest) -> Self::Future {
         // Check if the request path and method are in the list of excluded paths
 
+        //log path and method of request
+
+        log::debug!(
+            "Request path: {}, method: {}",
+            req.path(),
+            req.method().as_str()
+        );
+
+        // if the req.method().as_str() is OPTIONS, skip the authentication check
+
+        if req.method().as_str() == "OPTIONS" {
+            // Skip the authentication check
+            let fut = self.service.call(req);
+
+            return Box::pin(async move {
+                let res = fut.await?;
+                Ok(res)
+            });
+        }
+
+        // temp if the path is /ws skip the authentication check
+        if req.path() == "/ws" {
+            // Skip the authentication check
+            let fut = self.service.call(req);
+
+            return Box::pin(async move {
+                let res = fut.await?;
+                Ok(res)
+            });
+        }
+
         if let Some(excluded) = AUTH_MIDDLEWARE_CHECK_PATHS
             .iter()
             .find(|entry| entry.path == req.path() && entry.method == req.method().as_str())
@@ -85,14 +116,14 @@ where
                     file!(),
                     line!()
                 );
-                return Box::pin(async move { Err(ErrorUnauthorized(BaseError::Unauthorized)) });
+                return Box::pin(async move { Err(BaseError::Unauthorized.into()) });
             }
         };
         let claims = match is_authenticated(access_token) {
             Some(claims) => claims,
             None => {
                 error!("Unauthorized: There is no Claim associated with access token (file: {}, line: {})", file!(), line!());
-                return Box::pin(async move { Err(ErrorUnauthorized(BaseError::Unauthorized)) });
+                return Box::pin(async move { Err(BaseError::Unauthorized.into()) });
             }
         };
 

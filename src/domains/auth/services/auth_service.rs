@@ -3,7 +3,10 @@ use uuid::Uuid;
 
 use crate::domains::auth::dto::auth_dto::{Auth, AuthResponse};
 
-use super::database::auth_database::{create, get_auth_by_token, make_token_invalid_by_user_id};
+use super::database::auth_database::{
+    create, get_auth_by_refresh_token_from_data_base, get_auth_by_token,
+    make_token_invalid_by_user_id,
+};
 
 pub struct AuthService<'a> {
     pub conn: &'a mut PgConnection,
@@ -33,5 +36,9 @@ impl<'a> AuthService<'a> {
 
     pub fn get_auth_by_access_token(&mut self, token: &str) -> Option<Auth> {
         get_auth_by_token(self.conn, token)
+    }
+
+    pub fn get_auth_by_refresh_token(&mut self, token: &str) -> Option<Auth> {
+        get_auth_by_refresh_token_from_data_base(self.conn, token)
     }
 }
