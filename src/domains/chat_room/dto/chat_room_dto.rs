@@ -15,6 +15,7 @@ use crate::schema::{chat_rooms, sql_types::ChatTypeEnum};
 
 #[derive(Queryable, Insertable, AsChangeset, Serialize, Deserialize)]
 #[diesel(table_name = chat_rooms)]
+#[serde(rename_all = "camelCase")]
 pub struct ChatRoom {
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,

@@ -9,7 +9,8 @@ use crate::database::redis::create_redis_client;
 
 use crate::domains::chat_room::controllers::chat_room_controller;
 use crate::domains::message::controllers::messages_controller;
-use crate::domains::web_socket::controllers::web_socket_controller::{self, websocket};
+
+use crate::domains::web_socket::controllers::web_socket_controller;
 use crate::domains::{auth::controllers::auth_controller, user::controllers::user_controllers};
 use crate::middleware::auth_middleware::AuthMiddleware;
 use crate::middleware::custom_headers::CustomHeadersMiddleware;
@@ -30,9 +31,7 @@ use tracing_actix_web::TracingLogger;
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(Env::default().default_filter_or("trace"));
     log::info!("starting HTTP server at http://localhost:8080");
-    let redis_client = create_redis_client()
-        .await
-        .expect("Failed to create Redis client");
+    let redis_client = create_redis_client().expect("Failed to create Redis client");
 
     HttpServer::new(move || {
         App::new()

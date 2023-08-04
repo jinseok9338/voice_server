@@ -30,6 +30,8 @@ redis = "0.23.0"
 openai-rs = "0.1.1"
 actix-web-actors = "4.2.0"
 actix = "0.13.0"
+regex = "1.9.1"
+actix-rt = "2.8.0"
 
 [dependencies.uuid]
 version = "1.4.1"

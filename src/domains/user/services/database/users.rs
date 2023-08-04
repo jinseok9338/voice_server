@@ -3,6 +3,7 @@ use crate::{
     schema::users,
 };
 
+use chrono::Utc;
 use diesel::{
     query_dsl::methods::OrderDsl, ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl,
 };
@@ -38,6 +39,13 @@ pub fn read_one_user_by_name(conn: &mut PgConnection, user_name: &str) -> Option
         .filter(users::username.eq(user_name))
         .first(conn)
         .ok()
+}
+
+pub fn update_last_login_at_to_database(conn: &mut PgConnection, user_id: &Uuid) {
+    diesel::update(users::table.find(user_id))
+        .set(users::last_login_at.eq(Utc::now().naive_utc()))
+        .execute(conn)
+        .expect("Error updating user");
 }
 
 pub fn update_one(conn: &mut PgConnection, id: Uuid, user: &User) -> UserWithOutPassword {

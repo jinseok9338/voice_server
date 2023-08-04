@@ -38,6 +38,12 @@ pub struct NewMessage {
     pub message: String,
 }
 
+impl NewMessage {
+    pub fn new(message: String) -> Self {
+        Self { message }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Pagination<T> {
     pub content: Vec<T>,
