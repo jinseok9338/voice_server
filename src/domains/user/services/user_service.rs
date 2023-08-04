@@ -1,4 +1,4 @@
-use chrono::Utc;
+
 use diesel::pg::PgConnection;
 use uuid::Uuid;
 
@@ -9,7 +9,7 @@ use crate::{
 
 use super::database::users::{
     _read, create, delete_one, read_one, read_one_user_by_name,
-    read_one_user_by_user_id_with_password, update_one,
+    read_one_user_by_user_id_with_password, update_last_login_at_to_database, update_one,
 };
 
 pub struct UserService<'a> {
@@ -41,12 +41,9 @@ impl<'a> UserService<'a> {
         update_one(self.conn, id, user)
     }
 
-    pub fn update_last_login_at(&mut self, username: &str) -> Result<(), BaseError> {
+    pub fn update_last_login_at(&mut self, user_id: &Uuid) -> Result<(), BaseError> {
         // find the user and update the last_login_at
-        let user = self.read_one_user_by_user_name(username).unwrap();
-        let last_login_time = Utc::now().naive_utc();
-        let updated_user = User::updated_user(&user, None, None, Some(last_login_time), None);
-        let _updated_user = self.update_user(user.id, &updated_user);
+        update_last_login_at_to_database(self.conn, user_id);
         Ok(())
     }
 

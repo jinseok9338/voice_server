@@ -2,20 +2,20 @@ use actix_http::header::HeaderValue;
 use actix_service::{Service, Transform};
 use actix_web::dev::{ServiceRequest, ServiceResponse};
 
-use actix_web::error::ErrorUnauthorized;
-use actix_web::{Error, HttpMessage, HttpResponse};
+use actix_web::{Error, HttpMessage};
 use futures::future::{ok, Ready};
 use futures::task::{Context, Poll};
 use futures::Future;
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use log::error;
+use regex::Regex;
 use std::pin::Pin;
 
 use crate::database::postgres_pool::Db;
 
 use crate::domains::auth::services::auth_service::AuthService;
 use crate::domains::auth::services::jwt_service::Claims;
-use crate::errors::base_error_messages::{BaseError, BaseErrorMessages};
+use crate::errors::base_error_messages::BaseError;
 
 use super::consts::AUTH_MIDDLEWARE_CHECK_PATHS;
 
@@ -57,17 +57,11 @@ where
     }
 
     fn call(self: &Self, req: ServiceRequest) -> Self::Future {
-        // Check if the request path and method are in the list of excluded paths
-
-        //log path and method of request
-
         log::debug!(
-            "Request path: {}, method: {}",
+            "Request path: {}, method: {} ",
             req.path(),
-            req.method().as_str()
+            req.method().as_str(),
         );
-
-        // if the req.method().as_str() is OPTIONS, skip the authentication check
 
         if req.method().as_str() == "OPTIONS" {
             // Skip the authentication check
@@ -79,21 +73,10 @@ where
             });
         }
 
-        // temp if the path is /ws skip the authentication check
-        if req.path() == "/ws" {
-            // Skip the authentication check
-            let fut = self.service.call(req);
-
-            return Box::pin(async move {
-                let res = fut.await?;
-                Ok(res)
-            });
-        }
-
-        if let Some(excluded) = AUTH_MIDDLEWARE_CHECK_PATHS
-            .iter()
-            .find(|entry| entry.path == req.path() && entry.method == req.method().as_str())
-        {
+        if let Some(excluded) = AUTH_MIDDLEWARE_CHECK_PATHS.iter().find(|entry| {
+            let re = Regex::new(entry.path).unwrap();
+            re.is_match(req.path()) && entry.method == req.method().as_str()
+        }) {
             // If the request path and method are in the list of excluded paths, check the skip_check flag
             if excluded.skip_check {
                 // Skip the authentication check
@@ -105,7 +88,6 @@ where
                 });
             }
         }
-
         // Perform the authentication check
         let headers_value: Option<&HeaderValue> = req.headers().get("Authorization");
         let access_token: &actix_http::header::HeaderValue = match headers_value {

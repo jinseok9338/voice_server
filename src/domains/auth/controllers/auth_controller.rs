@@ -32,7 +32,7 @@ async fn login(auth: web::Json<AuthRequest>) -> Result<impl Responder, BaseError
             )
             .expect("Error verifying password")
             {
-                match user_service.update_last_login_at(&auth.username) {
+                match user_service.update_last_login_at(&user.id) {
                     Ok(_) => {}
                     Err(_) => return Err(BaseError::InternalServerError),
                 }
