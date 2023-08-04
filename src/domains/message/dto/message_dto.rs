@@ -57,7 +57,7 @@ pub struct Pagination<T> {
 
 #[derive(QueryableByName)]
 pub struct TotalElement {
-    #[sql_type = "BigInt"]
+    #[diesel(sql_type = BigInt)]
     pub count: i64,
 }
 

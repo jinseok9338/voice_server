@@ -10,23 +10,23 @@ use crate::schema::users::{self};
 #[serde(rename_all = "camelCase")]
 #[diesel(table_name = users)]
 pub struct User {
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     pub username: String,
-    #[sql_type = "Nullable<Text>"]
+    #[diesel(sql_type = Nullable<Text>)]
     pub password: Option<String>,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     pub email: String,
-    #[sql_type = "Nullable<Timestamptz>"]
+    #[diesel(sql_type = Nullable<Timestamptz>)]
     pub last_login_at: Option<NaiveDateTime>,
-    #[sql_type = "Nullable<Text>"]
+    #[diesel(sql_type = Nullable<Text>)]
     pub user_image: Option<String>,
-    #[sql_type = "Nullable<Timestamptz>"]
+    #[diesel(sql_type = Nullable<Timestamptz>)]
     pub created_at: Option<NaiveDateTime>,
-    #[sql_type = "Nullable<Timestamptz>"]
+    #[diesel(sql_type = Nullable<Timestamptz>)]
     pub updated_at: Option<NaiveDateTime>,
-    #[sql_type = "Nullable<Bool>"]
+    #[diesel(sql_type = Nullable<Bool>)]
     pub tester: Option<bool>,
-    #[sql_type = "dUuid"]
+    #[diesel(sql_type = dUuid)]
     pub id: Uuid,
 }
 

@@ -28,12 +28,8 @@ impl<'a> ChatRoomUserService<'a> {
         get_all_chat_room_ids_by_user_id(self.conn, user_id)
     }
 
-    pub fn match_the_user_with_chat_room(
-        &mut self,
-        user_id: Uuid,
-        chat_room_id: Uuid,
-    ) -> bool {
-        let chat_room_ids = self.find_all_chat_room_ids_by_user_id(user_id);    
+    pub fn match_the_user_with_chat_room(&mut self, user_id: Uuid, chat_room_id: Uuid) -> bool {
+        let chat_room_ids = self.find_all_chat_room_ids_by_user_id(user_id);
         chat_room_ids.contains(&chat_room_id)
     }
 }

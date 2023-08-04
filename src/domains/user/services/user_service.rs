@@ -1,4 +1,3 @@
-
 use diesel::pg::PgConnection;
 use uuid::Uuid;
 
@@ -9,7 +8,8 @@ use crate::{
 
 use super::database::users::{
     _read, create, delete_one, read_one, read_one_user_by_name,
-    read_one_user_by_user_id_with_password, update_last_login_at_to_database, update_one,
+    read_one_user_by_user_id_with_password, search_users_in_db, update_last_login_at_to_database,
+    update_one,
 };
 
 pub struct UserService<'a> {
@@ -27,6 +27,10 @@ impl<'a> UserService<'a> {
 
     pub fn _read_users(&mut self) -> Vec<User> {
         _read(self.conn)
+    }
+
+    pub fn search_users(&mut self, search_term: &str) -> Vec<UserWithOutPassword> {
+        search_users_in_db(self.conn, search_term)
     }
 
     pub fn read_one_user(&mut self, id: Uuid) -> Option<UserWithOutPassword> {

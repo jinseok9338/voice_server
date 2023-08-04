@@ -1,6 +1,3 @@
-
-
-
 use std::time::{Duration, Instant};
 
 use actix::prelude::*;
@@ -8,11 +5,10 @@ use actix::prelude::*;
 use actix_web_actors::ws;
 use uuid::Uuid;
 
-use crate::database::postgres_pool::Db;
+//use crate::database::postgres_pool::Db;
 use crate::database::redis::RedisActor;
 
-
-use crate::domains::message::services::message_service::MessageService;
+// use crate::domains::message::services::message_service::MessageService;
 
 use super::web_socket_message::WebSocketMessage;
 
@@ -71,8 +67,8 @@ impl Actor for MyWebSocket {
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-        let mut conn = Db::connect_to_db();
-        let mut message_service = MessageService::new(&mut conn);
+        // let mut conn = Db::connect_to_db();
+        //let mut message_service = MessageService::new(&mut conn);
         match msg {
             Ok(ws::Message::Ping(msg)) => {
                 self.hb = Instant::now();
@@ -89,13 +85,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
                 match publish {
                     Ok(_) => {
                         log::debug!("Published message to channel {}", channel_name);
-
                     }
                     Err(err) => {
                         log::error!("Error publishing message to channel {}", err);
                     }
                 }
-
             }
             Ok(ws::Message::Close(reason)) => {
                 ctx.close(reason);
@@ -117,7 +111,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
         }
     }
 }
-
 
 impl Handler<WebSocketMessage> for MyWebSocket {
     type Result = ();
