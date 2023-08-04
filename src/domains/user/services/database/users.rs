@@ -5,7 +5,8 @@ use crate::{
 
 use chrono::Utc;
 use diesel::{
-    query_dsl::methods::OrderDsl, ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl,
+    query_dsl::methods::OrderDsl, ExpressionMethods, PgConnection, PgTextExpressionMethods,
+    QueryDsl, RunQueryDsl,
 };
 use uuid::Uuid;
 
@@ -20,6 +21,22 @@ pub fn _read(conn: &mut PgConnection) -> Vec<User> {
     OrderDsl::order(users::table, users::id.desc())
         .load::<User>(conn)
         .expect("Error reading users")
+}
+
+pub fn search_users_in_db(conn: &mut PgConnection, search_term: &str) -> Vec<UserWithOutPassword> {
+    let search_term = format!("%{}%", search_term);
+    let users = users::table
+        .filter(users::username.ilike(&search_term))
+        .or_filter(users::email.ilike(&search_term))
+        .load::<User>(conn)
+        .expect("Error reading users");
+
+    // convert to UserWithOutPassword
+    let users = users
+        .into_iter()
+        .map(|user| User::user_without_password(&user))
+        .collect::<Vec<UserWithOutPassword>>();
+    users
 }
 
 pub fn read_one(conn: &mut PgConnection, id: Uuid) -> Option<UserWithOutPassword> {

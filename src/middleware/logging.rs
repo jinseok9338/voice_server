@@ -5,7 +5,7 @@ use actix_web::{
     error::Error,
     web,
 };
-use futures_util::future::{LocalBoxFuture, TryFutureExt};
+use futures_util::future::LocalBoxFuture;
 use log::error;
 use serde_json::Value;
 use std::rc::Rc;

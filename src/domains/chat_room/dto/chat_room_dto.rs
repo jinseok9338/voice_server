@@ -73,10 +73,11 @@ pub struct NewChatRoomRequest {
     pub name: String,
     pub user_ids: Vec<Uuid>,
     pub type_of_chat: String,
+    // PRIVATE, GROUP, ALONE
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, FromSqlRow, AsExpression, Deserialize, Serialize)]
-#[sql_type = "ChatTypeEnum"]
+#[diesel(sql_type = ChatTypeEnum)]
 pub enum TypeOfChat {
     Private,
     Group,

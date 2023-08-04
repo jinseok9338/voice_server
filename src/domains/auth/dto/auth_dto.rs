@@ -11,21 +11,21 @@ use uuid::Uuid;
 #[derive(Queryable, QueryableByName, Insertable, AsChangeset, Serialize, Deserialize)]
 #[diesel(table_name = auths)]
 pub struct Auth {
-    #[column_name = "access_token"]
+    #[diesel(column_name = access_token)]
     pub access_token: String,
-    #[column_name = "refresh_token"]
+    #[diesel(column_name = refresh_token)]
     pub refresh_token: String,
-    #[column_name = "created_at"]
+    #[diesel(column_name = created_at)]
     pub created_at: Option<NaiveDateTime>,
-    #[column_name = "is_valid"]
+    #[diesel(column_name = is_valid)]
     pub is_valid: bool,
-    #[column_name = "expiration"]
+    #[diesel(column_name = expiration)]
     pub expiration: Option<NaiveDateTime>,
-    #[column_name = "auth_provider"]
+    #[diesel(column_name = auth_provider)]
     pub auth_provider: String,
-    #[column_name = "user_id"]
+    #[diesel(column_name = user_id)]
     pub user_id: Option<Uuid>,
-    #[column_name = "id"]
+    #[diesel(column_name = id)]
     pub id: Uuid,
 }
 

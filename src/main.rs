@@ -58,7 +58,8 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("users")
                     .service(user_controllers::get_me)
-                    .service(user_controllers::update_me),
+                    .service(user_controllers::update_me)
+                    .service(user_controllers::search_users),
             )
             .service(
                 web::scope("chats")

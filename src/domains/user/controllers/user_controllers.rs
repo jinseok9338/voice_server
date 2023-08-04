@@ -130,3 +130,12 @@ async fn delete_me(req: HttpRequest) -> Result<impl Responder, BaseError> {
 
     Ok(HttpResponse::Ok().json("User deleted"))
 }
+
+#[get("/search-users")]
+async fn search_users(req: HttpRequest) -> Result<impl Responder, BaseError> {
+    let query = req.query_string();
+    let mut conn = Db::connect_to_db();
+    let mut service = UserService::new(&mut conn);
+    let users = service.search_users(query);
+    Ok(HttpResponse::Ok().json(users))
+}
