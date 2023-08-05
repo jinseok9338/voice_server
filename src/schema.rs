@@ -4,6 +4,10 @@ pub mod sql_types {
     #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "chat_type_enum"))]
     pub struct ChatTypeEnum;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "notification_type"))]
+    pub struct NotificationType;
 }
 
 diesel::table! {
@@ -64,6 +68,23 @@ diesel::table! {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::NotificationType;
+
+    notifications (id) {
+        id -> Uuid,
+        user_id -> Nullable<Uuid>,
+        user_to_notify -> Nullable<Uuid>,
+        notification_type -> Nullable<NotificationType>,
+        #[max_length = 255]
+        data -> Nullable<Varchar>,
+        read -> Nullable<Bool>,
+        created_at -> Nullable<Timestamp>,
+        updated_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     user_chat_room (id) {
         user_id -> Nullable<Uuid>,
         chat_room_id -> Nullable<Uuid>,
@@ -90,6 +111,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     cats,
     chat_rooms,
     messages,
+    notifications,
     user_chat_room,
     users,
 );
