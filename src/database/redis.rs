@@ -2,8 +2,13 @@ use std::sync::{Arc, Mutex};
 
 use redis::{Client, Connection, RedisError};
 
-use crate::domains::web_socket::services::{
-    web_socket_message::WebSocketMessage, web_socket_service::MyWebSocket,
+use crate::{
+    database::process_message_service::{
+        json_string_to_process_incoming_message_enum, process_incoming_message,
+    },
+    domains::web_socket::services::{
+        web_socket_message::WebSocketMessage, web_socket_service::MyWebSocket,
+    },
 };
 use actix::Addr;
 
@@ -47,9 +52,12 @@ impl RedisActor {
                 let msg = pubsub.get_message().unwrap();
                 let payload: String = msg.get_payload().unwrap();
                 // when the payload arrives Make new message to the chat_rooms
-                println!("Got message: {}", payload);
-                // Send the payload message to the WebSocket actor
-                web_socket_addr.do_send(WebSocketMessage(payload));
+                let message_to_payload = json_string_to_process_incoming_message_enum(&payload);
+                let result = process_incoming_message(message_to_payload);
+                println!("Got message: {}", result);
+                // process the message then send it to the web_socket_addr
+
+                web_socket_addr.do_send(WebSocketMessage(result));
             }
         });
     }

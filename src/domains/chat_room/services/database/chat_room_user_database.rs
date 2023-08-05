@@ -45,3 +45,25 @@ pub fn get_all_chat_room_ids_by_user_id(conn: &mut PgConnection, user_id: Uuid) 
     }
     chat_room_ids_vec
 }
+
+pub fn find_all_user_ids_with_chat_room_id_from_database(
+    conn: &mut PgConnection,
+    chat_room_id: Uuid,
+) -> Vec<Uuid> {
+    // find all user ids with chat room id in chat_room_user table
+    let user_ids = user_chat_room::table
+        .filter(user_chat_room::chat_room_id.eq(chat_room_id))
+        .select(user_chat_room::user_id)
+        .load::<Option<Uuid>>(conn)
+        .expect("Error loading user ids");
+
+    // convert Vec<Option<Uuid>> to Vec<Uuid>
+    let mut user_ids_vec = Vec::new();
+    for user_id in user_ids {
+        match user_id {
+            Some(id) => user_ids_vec.push(id),
+            None => (),
+        }
+    }
+    user_ids_vec
+}

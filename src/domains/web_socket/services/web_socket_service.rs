@@ -6,7 +6,10 @@ use actix_web_actors::ws;
 use uuid::Uuid;
 
 //use crate::database::postgres_pool::Db;
-use crate::database::redis::RedisActor;
+use crate::database::{
+    process_message_service::{sending_request_to_redis, SendingRequestToRedis},
+    redis::RedisActor,
+};
 
 // use crate::domains::message::services::message_service::MessageService;
 
@@ -67,8 +70,6 @@ impl Actor for MyWebSocket {
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-        // let mut conn = Db::connect_to_db();
-        //let mut message_service = MessageService::new(&mut conn);
         match msg {
             Ok(ws::Message::Ping(msg)) => {
                 self.hb = Instant::now();
@@ -81,7 +82,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
                 let addr = ctx.address();
                 let mut conn = RedisActor::new(addr);
                 let channel_name = format!("channel_{}", self.chat_room_id);
-                let publish = conn.publish(&channel_name, &text);
+                let request = SendingRequestToRedis::Chat {
+                    user_id: self.user_id,
+                    chat_room_id: self.chat_room_id,
+                    message: text.clone().to_string(),
+                };
+                let message = sending_request_to_redis(request);
+                let publish = conn.publish(&channel_name, &message);
+
                 match publish {
                     Ok(_) => {
                         log::debug!("Published message to channel {}", channel_name);
