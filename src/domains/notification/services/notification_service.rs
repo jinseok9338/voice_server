@@ -21,6 +21,12 @@ impl<'a> NotificationService<'a> {
         notification_type: NotificationTypeEnum,
         data: &str,
     ) -> Vec<Uuid> {
+        // filter out the user_id in the users_to_notify
+        let users_to_notify = users_to_notify
+            .into_iter()
+            .filter(|&x| x != user_id)
+            .collect::<Vec<Uuid>>();
+
         create_multiple_notifications(self.conn, user_id, users_to_notify, notification_type, data)
     }
 

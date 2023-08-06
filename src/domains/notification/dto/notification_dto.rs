@@ -59,6 +59,7 @@ pub struct NotificationRequest {
     pub users_to_notify: Vec<Uuid>,
     pub notification_type: NotificationTypeEnum,
     pub data: String,
+    pub chat_room_id: Uuid,
 }
 
 impl NotificationRequest {
@@ -67,12 +68,14 @@ impl NotificationRequest {
         users_to_notify: Vec<Uuid>,
         notification_type: NotificationTypeEnum,
         data: String,
+        chat_room_id: Uuid
     ) -> Self {
         Self {
             user_id,
             users_to_notify,
             notification_type,
             data,
+            chat_room_id
         }
     }
 
