@@ -3,8 +3,8 @@ use std::sync::{Arc, Mutex};
 use redis::{Client, Connection, RedisError};
 
 use crate::domains::web_socket::services::{
-        web_socket_message::WebSocketMessage, web_socket_service::MyWebSocket,
-    };
+    web_socket_message::WebSocketMessage, web_socket_service::MyWebSocket,
+};
 use actix::Addr;
 
 pub fn create_redis_client() -> Result<Client, RedisError> {

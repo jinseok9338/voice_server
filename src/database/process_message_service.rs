@@ -2,8 +2,15 @@ use uuid::Uuid;
 
 use crate::domains::{
     chat_room::services::chat_room_user_service::ChatRoomUserService,
-    notification::{dto::notification_dto::{NotificationRequest, NotificationTypeEnum}, services::notification_service::{self, NotificationService}},
-    user::services::user_service::UserService, message::{services::message_service::MessageService, dto::message_dto::{Message, NewMessage}},
+    message::{
+        dto::message_dto::{Message, NewMessage},
+        services::message_service::MessageService,
+    },
+    notification::{
+        dto::notification_dto::{NotificationRequest, NotificationTypeEnum},
+        services::notification_service::{self, NotificationService},
+    },
+    user::services::user_service::UserService,
 };
 
 use super::postgres_pool::Db;
@@ -13,7 +20,7 @@ pub enum ProcessIncomingMessage {
         message: String,
         user_id: Uuid,
         users_to_notify: Vec<Uuid>,
-        chat_room_id:Uuid
+        chat_room_id: Uuid,
     },
     // other variants will go here as you add them
 }
@@ -24,7 +31,7 @@ pub fn process_incoming_message(message: ProcessIncomingMessage) -> String {
             message,
             user_id,
             users_to_notify,
-            chat_room_id
+            chat_room_id,
         } => {
             // make message with user_id and chat_room_id and message
             let mut conn = Db::connect_to_db();
@@ -34,7 +41,12 @@ pub fn process_incoming_message(message: ProcessIncomingMessage) -> String {
             log::debug!("message: {:?}", message.id);
             let mut conn = Db::connect_to_db();
             let mut notification_service = NotificationService::new(&mut conn);
-            let notifications = notification_service.create_notifications(user_id, users_to_notify, NotificationTypeEnum::Chat, &message.message);
+            let notifications = notification_service.create_notifications(
+                user_id,
+                users_to_notify,
+                NotificationTypeEnum::Chat,
+                &message.message,
+            );
             log::debug!("notification: {:?}", notifications.len());
             // and make notifications
             "1".to_string()
@@ -55,7 +67,7 @@ pub fn json_string_to_process_incoming_message_enum(json: &str) -> ProcessIncomi
             message: data,
             user_id,
             users_to_notify,
-            chat_room_id
+            chat_room_id,
         },
         // other variants will go here as you add them
     }
@@ -96,4 +108,3 @@ pub fn sending_request_to_redis(message: SendingRequestToRedis) -> String {
         }
     }
 }
-
