@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 //use crate::database::postgres_pool::Db;
 use crate::database::{
-    process_message_service::{sending_request_to_redis, SendingRequestToRedis},
+    process_message_service::{sending_request_to_redis, SendingRequestToRedis, json_string_to_process_incoming_message_enum, process_incoming_message},
     redis::RedisActor,
 };
 
@@ -88,7 +88,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
                     message: text.clone().to_string(),
                 };
                 let message = sending_request_to_redis(request);
-                let publish = conn.publish(&channel_name, &message);
+                let message_to_payload = json_string_to_process_incoming_message_enum(&message);
+                let result = process_incoming_message(message_to_payload);
+                let publish = conn.publish(&channel_name, &result);
 
                 match publish {
                     Ok(_) => {
