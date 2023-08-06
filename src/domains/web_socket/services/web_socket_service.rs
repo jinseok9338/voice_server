@@ -7,7 +7,10 @@ use uuid::Uuid;
 
 //use crate::database::postgres_pool::Db;
 use crate::database::{
-    process_message_service::{sending_request_to_redis, SendingRequestToRedis, json_string_to_process_incoming_message_enum, process_incoming_message},
+    process_message_service::{
+        json_string_to_process_incoming_message_enum, process_incoming_message,
+        sending_request_to_redis, SendingRequestToRedis,
+    },
     redis::RedisActor,
 };
 

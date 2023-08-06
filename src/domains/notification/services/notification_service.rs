@@ -26,7 +26,7 @@ impl<'a> NotificationService<'a> {
             .into_iter()
             .filter(|&x| x != user_id)
             .collect::<Vec<Uuid>>();
-
+        
         create_multiple_notifications(self.conn, user_id, users_to_notify, notification_type, data)
     }
 
