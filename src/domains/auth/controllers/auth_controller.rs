@@ -8,7 +8,10 @@ use crate::{
                 jwt_service::Claims,
             },
         },
-        user::{dto::user_dto::User, services::user_service::UserService},
+        user::{
+            dto::user_dto::{NewUser, User},
+            services::user_service::UserService,
+        },
     },
     errors::base_error_messages::{BaseError, BaseErrorMessages},
 };
@@ -119,7 +122,7 @@ async fn reissue_token(
 }
 
 #[post("/signup")]
-async fn signup(user: web::Json<User>) -> Result<impl Responder, BaseError> {
+async fn signup(user: web::Json<NewUser>) -> Result<impl Responder, BaseError> {
     let mut user_service_conn = Db::connect_to_db();
     let mut auth_service_conn = Db::connect_to_db();
 
@@ -132,15 +135,10 @@ async fn signup(user: web::Json<User>) -> Result<impl Responder, BaseError> {
             2,
         ))),
         None => {
-            let password = user.password.as_ref().ok_or_else(|| {
-                BaseError::BadRequest(BaseErrorMessages::new(
-                    "Password not provided".to_string(),
-                    1,
-                ))
-            })?;
+            let password = user.password.clone();
             let hashed_password = hash(password, 12).expect("Error hashing password");
 
-            let new_user = User::new(
+            let new_user: User = User::new(
                 user.username.clone(),
                 hashed_password,
                 user.email.clone(),

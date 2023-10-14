@@ -107,3 +107,12 @@ pub struct UserRequest {
     pub user_image: Option<String>,
     pub last_login_at: Option<NaiveDateTime>,
 }
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NewUser {
+    pub username: String,
+    pub email: String,
+    pub password: String,
+    pub user_image: Option<String>,
+}

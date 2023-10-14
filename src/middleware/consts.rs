@@ -15,6 +15,11 @@ pub(crate) const AUTH_MIDDLEWARE_CHECK_PATHS: &[CheckPath<'static>] = &[
         skip_check: true,
     },
     CheckPath {
+        path: r"^/auth/signup$",
+        method: "POST",
+        skip_check: true,
+    },
+    CheckPath {
         path: r"^/ws/.*$",
         method: "GET",
         skip_check: true,
