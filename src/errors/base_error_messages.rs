@@ -15,7 +15,7 @@ impl BaseErrorMessages {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct DatabaseErrorWrapper(String);
 
 #[derive(Debug)]

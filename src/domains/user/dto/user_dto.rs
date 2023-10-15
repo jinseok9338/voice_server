@@ -2,6 +2,7 @@ use chrono::NaiveDateTime;
 use diesel::sql_types::{Bool, Nullable, Text, Timestamptz, Uuid as dUuid};
 use diesel::{AsChangeset, Insertable, Queryable, QueryableByName};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::schema::users::{self};
@@ -98,7 +99,7 @@ impl User {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(ToSchema, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserRequest {
     pub username: Option<String>,
@@ -108,7 +109,7 @@ pub struct UserRequest {
     pub last_login_at: Option<NaiveDateTime>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct NewUser {
     pub username: String,

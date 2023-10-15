@@ -24,5 +24,25 @@ pub(crate) const AUTH_MIDDLEWARE_CHECK_PATHS: &[CheckPath<'static>] = &[
         method: "GET",
         skip_check: true,
     },
+    CheckPath {
+        path: r"^/swagger-ui/.*$",
+        method: "GET",
+        skip_check: true,
+    },
+    CheckPath {
+        path: r"^/swagger-ui",
+        method: "GET",
+        skip_check: true,
+    },
+    CheckPath {
+        path: r"^/api-docs/openapi.json",
+        method: "GET",
+        skip_check: true,
+    },
+    CheckPath {
+        path: r"^/favicon.ico",
+        method: "GET",
+        skip_check: true,
+    },
     // Add more excluded paths as needed
 ];

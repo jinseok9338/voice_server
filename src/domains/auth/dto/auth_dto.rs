@@ -59,6 +59,7 @@ impl Auth {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AuthResponse {
     pub access_token: String,
     pub refresh_token: String,

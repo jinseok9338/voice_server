@@ -6,9 +6,10 @@ pub mod middleware;
 pub mod schema;
 
 use crate::database::redis::create_redis_client;
-
 use crate::domains::chat_room::controllers::chat_room_controller;
 use crate::domains::message::controllers::messages_controller;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::*;
 
 use crate::domains::web_socket::controllers::web_socket_controller;
 use crate::domains::{auth::controllers::auth_controller, user::controllers::user_controllers};
@@ -29,10 +30,14 @@ use tracing_actix_web::TracingLogger;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init_from_env(Env::default().default_filter_or("trace"));
-    log::info!("starting HTTP server at http://localhost:8080");
-    let redis_client = create_redis_client().expect("Failed to create Redis client");
+    #[derive(OpenApi)]
+    #[openapi(paths(auth_controller::signup))]
+    struct ApiDoc;
 
+    env_logger::init_from_env(Env::default().default_filter_or("debug"));
+    log::info!("starting HTTP server at http://localhost:8000");
+    let redis_client = create_redis_client().expect("Failed to create Redis client");
+    let pool = Db::create_db_pool();
     HttpServer::new(move || {
         App::new()
             .wrap(TracingLogger::default())
@@ -47,7 +52,13 @@ async fn main() -> std::io::Result<()> {
             )
             .wrap(CustomHeadersMiddleware)
             .wrap(AuthMiddleware)
-            .app_data(web::Data::new(redis_client.clone())) // Pass Redis client as shared state
+            .app_data(web::Data::new(redis_client.clone()))
+            .app_data(pool.clone())
+            // Pass Redis client as shared state
+            .service(
+                SwaggerUi::new("/swagger-ui/{_:.*}")
+                    .url("/api-docs/openapi.json", ApiDoc::openapi()),
+            )
             .service(
                 web::scope("auth")
                     .service(auth_controller::login)
@@ -73,7 +84,7 @@ async fn main() -> std::io::Result<()> {
             )
             .service(web_socket_controller::websocket)
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("127.0.0.1", 8000))?
     .run()
     .await
 }

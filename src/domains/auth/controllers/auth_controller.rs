@@ -18,7 +18,12 @@ use crate::{
 use actix_web::{post, put, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use bcrypt::{hash, verify};
 
+use diesel::{
+    r2d2::{ConnectionManager, Pool},
+    PgConnection,
+};
 use serde_json::json;
+use serde_json::Value;
 
 #[post("/token")]
 async fn login(auth: web::Json<AuthRequest>) -> Result<impl Responder, BaseError> {
@@ -121,6 +126,18 @@ async fn reissue_token(
     }
 }
 
+#[utoipa::path(
+    responses(
+        (status = 200, description = "SignUp succeeded"),
+        (status = 500, description = "Not accepted"),
+    ),
+    request_body(
+        content = inline(NewUser),
+        content_type = "application/json",
+    ),
+    context_path = "/auth",
+    post
+)]
 #[post("/signup")]
 async fn signup(user: web::Json<NewUser>) -> Result<impl Responder, BaseError> {
     let mut user_service_conn = Db::connect_to_db();
@@ -128,6 +145,7 @@ async fn signup(user: web::Json<NewUser>) -> Result<impl Responder, BaseError> {
 
     let mut user_service = UserService::new(&mut user_service_conn);
     let mut auth_service = AuthService::new(&mut auth_service_conn);
+
     let user_exists = user_service.read_one_user_by_user_name(&user.username);
     match user_exists {
         Some(_) => Err(BaseError::Conflict(BaseErrorMessages::new(

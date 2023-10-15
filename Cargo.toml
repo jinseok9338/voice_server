@@ -5,15 +5,20 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4.3.1"
-shuttle-actix-web = "0.21.0"
-shuttle-runtime = "0.21.0"
+
 tokio = "1.26.0"
 tokio-postgres = "0.7.8"
-diesel = { version = "2.1.0", features = ["postgres","chrono","numeric","uuid"] }
+diesel = { version = "2.1.0", features = [
+    "postgres",
+    "chrono",
+    "numeric",
+    "uuid",
+    "r2d2",
+] }
 dotenv = "0.15.0"
 serde = "1.0"
 serde_derive = "1.0"
-chrono = "0.4.26"
+chrono = { version = "0.4.31", features = ["serde"] }
 serde_json = "1.0"
 bcrypt = "0.15.0"
 jsonwebtoken = "8.3.0"
@@ -32,14 +37,13 @@ actix-web-actors = "4.2.0"
 actix = "0.13.0"
 regex = "1.9.1"
 actix-rt = "2.8.0"
-
+utoipa = { version = "4", features = ["actix_extras"] }
+utoipa-swagger-ui = { version = "4.0.0", features = ["actix-web"] }
 [dependencies.uuid]
 version = "1.4.1"
 features = [
     "v4",                # Lets you generate random UUIDs
     "fast-rng",          # Use a faster (but still sufficiently random) RNG
     "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
-    "serde"
+    "serde",
 ]
-
-
