@@ -10,18 +10,21 @@ use jsonwebtoken::{decode, DecodingKey, Validation};
 use log::error;
 use regex::Regex;
 use std::pin::Pin;
-
-use crate::database::postgres_pool::Db;
+use std::sync::Arc;
 
 use crate::domains::auth::services::auth_service::AuthService;
 use crate::domains::auth::services::jwt_service::Claims;
+use crate::domains::services::AppStateServices;
 use crate::errors::base_error_messages::BaseError;
 
 use super::consts::AUTH_MIDDLEWARE_CHECK_PATHS;
 
-pub struct AuthMiddleware;
+pub struct AuthMiddleware<S> {
+    pub service: S,
+    pub app_services: Arc<AppStateServices>,
+}
 
-impl<S, Req> Transform<S, ServiceRequest> for AuthMiddleware
+impl<S, Req> Transform<S, ServiceRequest> for AuthMiddleware<S>
 where
     S: Service<ServiceRequest, Response = ServiceResponse<Req>, Error = Error>,
     S::Future: 'static,
@@ -34,12 +37,16 @@ where
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ok(AuthMiddlewareService { service })
+        ok(AuthMiddlewareService {
+            service,
+            app_services: self.app_services.clone(),
+        })
     }
 }
 
 pub struct AuthMiddlewareService<S> {
     service: S,
+    app_services: Arc<AppStateServices>,
 }
 
 impl<S, Req> Service<ServiceRequest> for AuthMiddlewareService<S>
@@ -101,7 +108,8 @@ where
                 return Box::pin(async move { Err(BaseError::Unauthorized.into()) });
             }
         };
-        let claims = match is_authenticated(access_token) {
+        let mut auth_service = self.app_services.auth_service();
+        let claims = match is_authenticated(access_token, &mut auth_service) {
             Some(claims) => claims,
             None => {
                 error!("Unauthorized: There is no Claim associated with access token (file: {}, line: {})", file!(), line!());
@@ -120,15 +128,15 @@ where
     }
 }
 
-fn is_authenticated(access_token: &HeaderValue) -> Option<Claims> {
+fn is_authenticated(access_token: &HeaderValue, auth_service: &mut AuthService) -> Option<Claims> {
     dotenv::dotenv().ok();
     let token = access_token.to_str().unwrap().to_string();
     let token = token.replace("Bearer ", "");
     let token = token.trim();
-    let mut conn = Db::connect_to_db();
+
     //check the token in auths table and see if it is valid first
-    let mut auth_service = AuthService::new(&mut conn);
-    let auth = auth_service.get_auth_by_access_token(token);
+
+    let mut auth = auth_service.get_auth_by_access_token(token);
     if auth.is_none() {
         error!(
             "Unauthorized: There is no Auth associated with access token (file: {}, line: {})",

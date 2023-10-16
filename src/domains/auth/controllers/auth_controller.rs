@@ -1,34 +1,27 @@
+use std::sync::Arc;
+
 use crate::{
-    database::postgres_pool::Db,
     domains::{
         auth::{
             dto::auth_dto::{Auth, AuthRequest, AuthResponse, ReissueRequest},
-            services::{
-                auth_service::AuthService, database::auth_database::make_token_invalid_by_user_id,
-                jwt_service::Claims,
-            },
+            services::jwt_service::Claims,
         },
-        user::{
-            dto::user_dto::{NewUser, User},
-            services::user_service::UserService,
-        },
+        services::AppStateServices,
+        user::dto::user_dto::{NewUser, User},
     },
     errors::base_error_messages::{BaseError, BaseErrorMessages},
 };
 use actix_web::{post, put, web, HttpMessage, HttpRequest, HttpResponse, Responder};
 use bcrypt::{hash, verify};
 
-use diesel::{
-    r2d2::{ConnectionManager, Pool},
-    PgConnection,
-};
 use serde_json::json;
-use serde_json::Value;
 
 #[post("/token")]
-async fn login(auth: web::Json<AuthRequest>) -> Result<impl Responder, BaseError> {
-    let mut conn = Db::connect_to_db();
-    let mut user_service = UserService::new(&mut conn);
+async fn login(
+    auth: web::Json<AuthRequest>,
+    data: web::Data<AppStateServices>,
+) -> Result<impl Responder, BaseError> {
+    let mut user_service = data.user_service();
 
     let user = user_service.read_one_user_by_user_name(&auth.username);
 
@@ -44,7 +37,7 @@ async fn login(auth: web::Json<AuthRequest>) -> Result<impl Responder, BaseError
                     Ok(_) => {}
                     Err(_) => return Err(BaseError::InternalServerError),
                 }
-                let mut auth_service = AuthService::new(&mut conn);
+                let mut auth_service = data.auth_service();
 
                 auth_service.invalidate_token(&user.id);
                 let auth_response = auth_service.generate_token(&user.id);
@@ -66,7 +59,10 @@ async fn login(auth: web::Json<AuthRequest>) -> Result<impl Responder, BaseError
 }
 
 #[put("/token")]
-async fn logout(req: HttpRequest) -> Result<impl Responder, BaseError> {
+async fn logout(
+    req: HttpRequest,
+    data: web::Data<AppStateServices>,
+) -> Result<impl Responder, BaseError> {
     // Access the claims from the request extensions
     let claims = req.extensions();
     let claims = claims.get::<Claims>();
@@ -79,11 +75,10 @@ async fn logout(req: HttpRequest) -> Result<impl Responder, BaseError> {
             )))
         }
     };
-
+    let mut auth_service = data.auth_service();
     let user_id = claims.user_id;
 
-    let mut conn = Db::connect_to_db();
-    make_token_invalid_by_user_id(&mut conn, &user_id);
+    auth_service.invalidate_token(&user_id);
 
     Ok(HttpResponse::Ok().json(json!({"message": "Logout successful"})))
 }
@@ -91,14 +86,14 @@ async fn logout(req: HttpRequest) -> Result<impl Responder, BaseError> {
 #[put("/token/reissue")]
 async fn reissue_token(
     _req: HttpRequest,
-    data: web::Json<ReissueRequest>,
+    reissue_request: web::Json<ReissueRequest>,
+    data: web::Data<AppStateServices>,
 ) -> Result<impl Responder, BaseError> {
-    let mut auth_conn = Db::connect_to_db();
-    let mut user_conn = Db::connect_to_db();
-    let mut auth_service = AuthService::new(&mut auth_conn);
-    let mut user_service = UserService::new(&mut user_conn);
+    let mut auth_service = data.auth_service();
+    let mut user_service = data.user_service();
 
-    let user_auth: Option<Auth> = auth_service.get_auth_by_refresh_token(&data.refresh_token);
+    let user_auth: Option<Auth> =
+        auth_service.get_auth_by_refresh_token(&reissue_request.refresh_token);
     match user_auth {
         // if user generate new Token associated with user_id
         Some(user_auth) => {
@@ -139,13 +134,13 @@ async fn reissue_token(
     post
 )]
 #[post("/signup")]
-async fn signup(user: web::Json<NewUser>) -> Result<impl Responder, BaseError> {
-    let mut user_service_conn = Db::connect_to_db();
-    let mut auth_service_conn = Db::connect_to_db();
-
-    let mut user_service = UserService::new(&mut user_service_conn);
-    let mut auth_service = AuthService::new(&mut auth_service_conn);
-
+async fn signup(
+    user: web::Json<NewUser>,
+    data: web::Data<Arc<AppStateServices>>,
+) -> Result<impl Responder, BaseError> {
+    let data = data.into_inner();
+    let mut user_service = data.user_service();
+    let mut auth_service = data.auth_service();
     let user_exists = user_service.read_one_user_by_user_name(&user.username);
     match user_exists {
         Some(_) => Err(BaseError::Conflict(BaseErrorMessages::new(

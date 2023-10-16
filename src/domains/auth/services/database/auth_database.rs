@@ -5,15 +5,15 @@ use crate::domains::auth::dto::auth_dto::Auth;
 use crate::domains::auth::services::jwt_service::create_tokens;
 use crate::schema::auths;
 use diesel::prelude::*;
+use diesel::r2d2::{ConnectionManager, PooledConnection};
 use diesel::PgConnection;
 use dotenv::dotenv;
 use uuid::Uuid;
 
-pub fn create(conn: &mut PgConnection, user_id: &Uuid) -> Auth {
-    // Load environment variables from .env file
-    dotenv().ok();
+type Conn = PooledConnection<ConnectionManager<PgConnection>>;
 
-    // Get the expiration time from the environment variable
+pub fn create(conn: &mut Conn, user_id: &Uuid) -> Auth {
+    dotenv().ok();
 
     let secret = env::var("ACCESS_TOKEN_SECRET").expect("JWT_SECRET must be set");
 
@@ -29,40 +29,35 @@ pub fn create(conn: &mut PgConnection, user_id: &Uuid) -> Auth {
 
     diesel::insert_into(auths::table)
         .values(&new_auth)
-        .execute(conn)
+        .execute(&mut *conn)
         .expect("Error saving new auth");
-
-    // find the existing access Token if found invalidate the access Token
 
     new_auth
 }
 
-pub fn make_token_invalid_by_user_id(conn: &mut PgConnection, user_id: &Uuid) -> usize {
+pub fn make_token_invalid_by_user_id(conn: &mut Conn, user_id: &Uuid) -> usize {
     diesel::delete(auths::table.filter(auths::user_id.eq(user_id)))
-        .execute(conn)
+        .execute(&mut *conn)
         .expect("Error deleting auth")
 }
 
-pub fn get_auth_by_token(conn: &mut PgConnection, token: &str) -> Option<Auth> {
+pub fn get_auth_by_token(conn: &mut Conn, token: &str) -> Option<Auth> {
     let auth: Option<Auth> = auths::table
         .filter(auths::access_token.eq(token))
         .filter(auths::is_valid.eq(true))
         .filter(auths::expiration.gt(chrono::Utc::now().naive_utc()))
-        .first::<Auth>(conn)
+        .first::<Auth>(&mut *conn)
         .optional()
         .expect("Error loading auth");
 
     auth
 }
 
-pub fn get_auth_by_refresh_token_from_data_base(
-    conn: &mut PgConnection,
-    token: &str,
-) -> Option<Auth> {
+pub fn get_auth_by_refresh_token_from_data_base(conn: &mut Conn, token: &str) -> Option<Auth> {
     let auth: Option<Auth> = auths::table
         .filter(auths::refresh_token.eq(token))
         .filter(auths::is_valid.eq(true))
-        .first::<Auth>(conn)
+        .first::<Auth>(&mut *conn)
         .optional()
         .expect("Error loading auth");
 

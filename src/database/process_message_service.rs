@@ -2,15 +2,11 @@ use uuid::Uuid;
 
 use crate::domains::{
     chat_room::services::chat_room_user_service::ChatRoomUserService,
-    message::{
-        dto::message_dto::{Message, NewMessage},
-        services::message_service::MessageService,
-    },
+    message::{dto::message_dto::NewMessage, services::message_service::MessageService},
     notification::{
         dto::notification_dto::{NotificationRequest, NotificationTypeEnum},
-        services::notification_service::{self, NotificationService},
+        services::notification_service::NotificationService,
     },
-    user::services::user_service::UserService,
 };
 
 use super::postgres_pool::Db;
