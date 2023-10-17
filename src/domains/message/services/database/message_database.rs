@@ -1,11 +1,14 @@
-use diesel::{PgConnection, RunQueryDsl};
+use diesel::RunQueryDsl;
 
 use uuid::Uuid;
 
-use crate::domains::message::dto::message_dto::{Message, NewMessage, Pagination, TotalElement};
+use crate::{
+    consts::Conn,
+    domains::message::dto::message_dto::{Message, NewMessage, Pagination, TotalElement},
+};
 
 pub fn read_all_by_chat_room_ids(
-    conn: &mut PgConnection,
+    conn: &mut Conn,
     chat_room_id: Uuid,
     page: i32,
     size: Option<i32>,
@@ -27,7 +30,9 @@ pub fn read_all_by_chat_room_ids(
         .bind::<diesel::sql_types::Text, _>(&chat_room_id_str)
         .bind::<diesel::sql_types::Integer, _>(size)
         .bind::<diesel::sql_types::Integer, _>(offset);
-    let messages: Vec<Message> = messages_query.load(conn).expect("Error loading messages");
+    let messages: Vec<Message> = messages_query
+        .load(&mut *conn)
+        .expect("Error loading messages");
 
     let sql = "SELECT COUNT(*) as count FROM messages WHERE chat_room_id = $1::uuid";
 
@@ -35,7 +40,7 @@ pub fn read_all_by_chat_room_ids(
         diesel::sql_query(sql).bind::<diesel::sql_types::Text, _>(&chat_room_id_str);
 
     let total_elements: Vec<TotalElement> = total_elements_query
-        .load(conn)
+        .load(&mut *conn)
         .expect("Error loading total elements count")
         .into_iter()
         .collect();
@@ -55,7 +60,7 @@ pub fn read_all_by_chat_room_ids(
 }
 
 pub fn create_message_to_database(
-    conn: &mut PgConnection,
+    conn: &mut Conn,
     chat_room_id: Uuid,
     new_message: &NewMessage,
     user_id: Uuid,
@@ -63,7 +68,7 @@ pub fn create_message_to_database(
     let new_message = Message::new(chat_room_id, new_message.message.clone(), user_id);
     let message = diesel::insert_into(crate::schema::messages::table)
         .values(&new_message)
-        .get_result::<Message>(conn)
+        .get_result::<Message>(&mut *conn)
         .expect("Error saving new message");
 
     message

@@ -1,17 +1,14 @@
 use crate::{
+    consts::Conn,
     domains::user::dto::user_dto::{User, UserWithOutPassword},
     schema::users,
 };
 
 use chrono::Utc;
 use diesel::{
-    query_dsl::methods::OrderDsl,
-    r2d2::{ConnectionManager, PooledConnection},
-    ExpressionMethods, PgConnection, PgTextExpressionMethods, QueryDsl, RunQueryDsl,
+    query_dsl::methods::OrderDsl, ExpressionMethods, PgTextExpressionMethods, QueryDsl, RunQueryDsl,
 };
 use uuid::Uuid;
-
-type Conn = PooledConnection<ConnectionManager<PgConnection>>;
 
 pub fn create(conn: &mut Conn, user: &User) -> User {
     diesel::insert_into(users::table)

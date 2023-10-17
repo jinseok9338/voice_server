@@ -12,12 +12,11 @@ use regex::Regex;
 use std::pin::Pin;
 use std::sync::Arc;
 
+use crate::consts::AUTH_MIDDLEWARE_CHECK_PATHS;
 use crate::domains::auth::services::auth_service::AuthService;
 use crate::domains::auth::services::jwt_service::Claims;
 use crate::domains::services::AppStateServices;
 use crate::errors::base_error_messages::BaseError;
-
-use super::consts::AUTH_MIDDLEWARE_CHECK_PATHS;
 
 pub struct AuthMiddleware<S> {
     pub service: S,
@@ -136,7 +135,7 @@ fn is_authenticated(access_token: &HeaderValue, auth_service: &mut AuthService) 
 
     //check the token in auths table and see if it is valid first
 
-    let mut auth = auth_service.get_auth_by_access_token(token);
+    let auth = auth_service.get_auth_by_access_token(token);
     if auth.is_none() {
         error!(
             "Unauthorized: There is no Auth associated with access token (file: {}, line: {})",

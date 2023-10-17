@@ -1,20 +1,17 @@
-use diesel::{
-    pg::PgConnection,
-    r2d2::{ConnectionManager, Pool, PooledConnection},
-};
 use uuid::Uuid;
 
-use crate::domains::auth::dto::auth_dto::{Auth, AuthResponse};
+use crate::{
+    consts::{Conn, DbPool},
+    domains::auth::dto::auth_dto::{Auth, AuthResponse},
+};
 
 use super::database::auth_database::{
     create, get_auth_by_refresh_token_from_data_base, get_auth_by_token,
     make_token_invalid_by_user_id,
 };
 
-type DbPool = Pool<ConnectionManager<PgConnection>>;
-
 pub struct AuthService {
-    pub conn: PooledConnection<ConnectionManager<PgConnection>>,
+    pub conn: Conn,
 }
 
 impl AuthService {

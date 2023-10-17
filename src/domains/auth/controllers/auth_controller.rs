@@ -122,16 +122,17 @@ async fn reissue_token(
 }
 
 #[utoipa::path(
+    post,
     responses(
-        (status = 200, description = "SignUp succeeded"),
-        (status = 500, description = "Not accepted"),
+        (status = 200, response = inline(AuthResponse)),
     ),
+
     request_body(
         content = inline(NewUser),
         content_type = "application/json",
     ),
     context_path = "/auth",
-    post
+   
 )]
 #[post("/signup")]
 async fn signup(

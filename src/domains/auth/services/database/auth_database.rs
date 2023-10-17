@@ -1,16 +1,13 @@
 use std::env;
 
+use crate::consts::Conn;
 use crate::domains::auth::dto::auth_dto::Auth;
 
 use crate::domains::auth::services::jwt_service::create_tokens;
 use crate::schema::auths;
 use diesel::prelude::*;
-use diesel::r2d2::{ConnectionManager, PooledConnection};
-use diesel::PgConnection;
 use dotenv::dotenv;
 use uuid::Uuid;
-
-type Conn = PooledConnection<ConnectionManager<PgConnection>>;
 
 pub fn create(conn: &mut Conn, user_id: &Uuid) -> Auth {
     dotenv().ok();

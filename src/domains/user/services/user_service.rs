@@ -1,10 +1,7 @@
-use diesel::{
-    pg::PgConnection,
-    r2d2::{ConnectionManager, Pool, PooledConnection},
-};
 use uuid::Uuid;
 
 use crate::{
+    consts::{Conn, DbPool},
     domains::user::dto::user_dto::{User, UserWithOutPassword},
     errors::base_error_messages::BaseError,
 };
@@ -15,10 +12,8 @@ use super::database::users::{
     update_one,
 };
 
-type DbPool = Pool<ConnectionManager<PgConnection>>;
-
 pub struct UserService {
-    pub conn: PooledConnection<ConnectionManager<PgConnection>>,
+    pub conn: Conn,
 }
 
 impl UserService {
