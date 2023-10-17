@@ -15,15 +15,27 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
     domains::{
-        auth::controllers::auth_controller, chat_room::controllers::chat_room_controller,
-        message::controllers::messages_controller, services::AppStateServices,
-        user::controllers::user_controllers, web_socket::controllers::web_socket_controller,
+        auth::{controllers::auth_controller, dto::auth_dto::AuthResponse},
+        chat_room::controllers::chat_room_controller,
+        message::controllers::messages_controller,
+        services::AppStateServices,
+        user::{
+            controllers::user_controllers,
+            dto::user_dto::{AllUsers, NewUser, UserResponse},
+        },
+        web_socket::controllers::web_socket_controller,
     },
     middleware::custom_headers::CustomHeadersMiddleware,
 };
 
 #[derive(OpenApi)]
-#[openapi(paths(auth_controller::signup))]
+#[openapi(
+    paths(auth_controller::signup, user_controllers::get_users),
+    components(
+        schemas(UserResponse, NewUser, AuthResponse),
+        responses(AllUsers, AuthResponse)
+    )
+)]
 struct ApiDoc;
 
 pub fn config(cfg: &mut ServiceConfig) {
@@ -76,7 +88,8 @@ pub fn setup_app(
         web::scope("users")
             .service(user_controllers::get_me)
             .service(user_controllers::update_me)
-            .service(user_controllers::search_users),
+            .service(user_controllers::search_users)
+            .service(user_controllers::get_users),
     )
     .service(
         web::scope("chats")

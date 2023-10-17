@@ -2,12 +2,14 @@ use chrono::NaiveDateTime;
 use diesel::sql_types::{Bool, Nullable, Text, Timestamptz, Uuid as dUuid};
 use diesel::{AsChangeset, Insertable, Queryable, QueryableByName};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{ToResponse, ToSchema};
 use uuid::Uuid;
 
 use crate::schema::users::{self};
 
-#[derive(QueryableByName, Queryable, Insertable, AsChangeset, Serialize, Deserialize)]
+#[derive(
+    QueryableByName, Queryable, Insertable, AsChangeset, Serialize, Deserialize, utoipa::ToSchema,
+)]
 #[serde(rename_all = "camelCase")]
 #[diesel(table_name = users)]
 pub struct User {
@@ -18,30 +20,19 @@ pub struct User {
     #[diesel(sql_type = Text)]
     pub email: String,
     #[diesel(sql_type = Nullable<Timestamptz>)]
+    #[schema(value_type = String, format = "date-time")]
     pub last_login_at: Option<NaiveDateTime>,
     #[diesel(sql_type = Nullable<Text>)]
     pub user_image: Option<String>,
     #[diesel(sql_type = Nullable<Timestamptz>)]
+    #[schema(value_type = String, format = "date-time")]
     pub created_at: Option<NaiveDateTime>,
     #[diesel(sql_type = Nullable<Timestamptz>)]
+    #[schema(value_type = String, format = "date-time")]
     pub updated_at: Option<NaiveDateTime>,
     #[diesel(sql_type = Nullable<Bool>)]
     pub tester: Option<bool>,
     #[diesel(sql_type = dUuid)]
-    pub id: Uuid,
-}
-
-#[derive(QueryableByName, Insertable, AsChangeset, Serialize, Deserialize)]
-#[diesel(table_name = users)]
-#[serde(rename_all = "camelCase")]
-pub struct UserWithOutPassword {
-    pub username: String,
-    pub email: String,
-    pub last_login_at: Option<NaiveDateTime>,
-    pub user_image: Option<String>,
-    pub created_at: Option<NaiveDateTime>,
-    pub updated_at: Option<NaiveDateTime>,
-    pub tester: Option<bool>,
     pub id: Uuid,
 }
 
@@ -99,6 +90,45 @@ impl User {
     }
 }
 
+#[derive(
+    QueryableByName, Insertable, AsChangeset, Serialize, Deserialize, utoipa::ToSchema, ToResponse,
+)]
+#[diesel(table_name = users)]
+#[serde(rename_all = "camelCase")]
+pub struct UserWithOutPassword {
+    pub username: String,
+    pub email: String,
+    #[schema(value_type = String, format = "date-time")]
+    pub last_login_at: Option<NaiveDateTime>,
+    pub user_image: Option<String>,
+    #[schema(value_type = String, format = "date-time")]
+    pub created_at: Option<NaiveDateTime>,
+    #[schema(value_type = String, format = "date-time")]
+    pub updated_at: Option<NaiveDateTime>,
+    pub tester: Option<bool>,
+    pub id: Uuid,
+}
+
+#[derive(Serialize, Deserialize, ToSchema, ToResponse)]
+#[serde(rename_all = "camelCase")]
+pub struct UserResponse {
+    pub username: String,
+    pub password: Option<String>,
+    pub email: String,
+    #[schema(value_type = Option<String>, format = "date-time")]
+    pub last_login_at: Option<NaiveDateTime>,
+    pub user_image: Option<String>,
+
+    #[schema(value_type = Option<String>, format = "date-time")]
+    pub created_at: Option<NaiveDateTime>,
+
+    #[schema(value_type = Option<String>, format = "date-time")]
+    pub updated_at: Option<NaiveDateTime>,
+    pub tester: Option<bool>,
+    #[schema(value_type = String, format = "uuid")]
+    pub id: Uuid,
+}
+
 #[derive(ToSchema, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserRequest {
@@ -117,3 +147,6 @@ pub struct NewUser {
     pub password: String,
     pub user_image: Option<String>,
 }
+
+#[derive(ToResponse)]
+pub struct AllUsers(Vec<UserResponse>);

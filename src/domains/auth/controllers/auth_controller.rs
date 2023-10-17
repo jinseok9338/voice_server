@@ -19,8 +19,9 @@ use serde_json::json;
 #[post("/token")]
 async fn login(
     auth: web::Json<AuthRequest>,
-    data: web::Data<AppStateServices>,
+    data: web::Data<Arc<AppStateServices>>,
 ) -> Result<impl Responder, BaseError> {
+    let data = data.into_inner();
     let mut user_service = data.user_service();
 
     let user = user_service.read_one_user_by_user_name(&auth.username);

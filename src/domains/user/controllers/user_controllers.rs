@@ -1,6 +1,9 @@
+use std::sync::Arc;
+
 use actix_http::HttpMessage;
 use actix_web::{delete, get, put, web, HttpRequest, HttpResponse, Responder};
 
+use crate::domains::user::dto::user_dto::AllUsers;
 use crate::{
     domains::{
         auth::services::jwt_service::{decode_access_token, Claims},
@@ -9,6 +12,21 @@ use crate::{
     },
     errors::base_error_messages::{BaseError, BaseErrorMessages},
 };
+
+#[utoipa::path(
+    get,
+    responses(
+        (status = 200, response = inline(AllUsers)),
+    ),
+    context_path = "/users",
+)]
+#[get("/users")]
+async fn get_users(data: web::Data<Arc<AppStateServices>>) -> Result<impl Responder, BaseError> {
+    let data = data.into_inner();
+    let mut service = data.user_service();
+    let users = service._read_users();
+    Ok(HttpResponse::Ok().json(users))
+}
 
 #[get("/me")]
 async fn get_me(
@@ -134,6 +152,7 @@ async fn search_users(
     data: web::Data<AppStateServices>,
 ) -> Result<impl Responder, BaseError> {
     let query = req.query_string();
+
     let mut service = data.user_service();
     let users = service.search_users(query);
     Ok(HttpResponse::Ok().json(users))

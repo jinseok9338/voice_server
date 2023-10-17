@@ -67,6 +67,7 @@ pub struct AuthResponse {
     #[schema(value_type = String, format = "date-time")]
     pub expiration: NaiveDateTime,
 }
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthRequest {
