@@ -5,16 +5,21 @@ use actix::prelude::*;
 use actix_web_actors::ws;
 use uuid::Uuid;
 
-//use crate::database::postgres_pool::Db;
-use crate::database::{
-    process_message_service::{
-        json_string_to_process_incoming_message_enum, process_incoming_message,
-        sending_request_to_redis, SendingRequestToRedis,
+use crate::{
+    database::{
+        process_message_service::{
+            json_string_to_process_incoming_message_enum, process_incoming_message,
+            sending_request_to_redis, SendingRequestToRedis,
+        },
+        redis::RedisActor,
     },
-    redis::RedisActor,
+    domains::{
+        chat_room::services::{
+            chat_room_service::ChatRoomService, chat_room_user_service::ChatRoomUserService,
+        },
+        message::services::message_service::MessageService,
+    },
 };
-
-// use crate::domains::message::services::message_service::MessageService;
 
 use super::web_socket_message::WebSocketMessage;
 
@@ -25,14 +30,26 @@ pub struct MyWebSocket {
     hb: Instant,
     user_id: Uuid,
     chat_room_id: Uuid,
+    chat_room_user_service: ChatRoomUserService,
+    message_service: MessageService,
+    chat_room_service: ChatRoomService,
 }
 
 impl MyWebSocket {
-    pub fn new(user_id: Uuid, chat_room_id: Uuid) -> Self {
+    pub fn new(
+        user_id: Uuid,
+        chat_room_id: Uuid,
+        chat_room_user_service: ChatRoomUserService,
+        message_service: MessageService,
+        chat_room_service: ChatRoomService,
+    ) -> Self {
         Self {
             hb: Instant::now(),
             user_id,
             chat_room_id,
+            chat_room_user_service,
+            message_service,
+            chat_room_service,
         }
     }
 
@@ -90,9 +107,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
                     chat_room_id: self.chat_room_id,
                     message: text.clone().to_string(),
                 };
-                let message = sending_request_to_redis(request);
+                let message = sending_request_to_redis(request, &mut self.chat_room_user_service);
                 let message_to_payload = json_string_to_process_incoming_message_enum(&message);
-                let result = process_incoming_message(message_to_payload);
+                let result = process_incoming_message(
+                    message_to_payload,
+                    &mut self.message_service,
+                    &mut self.chat_room_service,
+                );
                 let publish = conn.publish(&channel_name, &result);
 
                 match publish {

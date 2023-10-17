@@ -1,16 +1,14 @@
 use uuid::Uuid;
 
 use crate::domains::{
-    chat_room::services::chat_room_user_service::ChatRoomUserService,
-    message::{
-        dto::message_dto::{Message, NewMessage},
-        services::message_service::MessageService,
+    chat_room::services::{
+        chat_room_service::ChatRoomService, chat_room_user_service::ChatRoomUserService,
     },
+    message::{dto::message_dto::NewMessage, services::message_service::MessageService},
     notification::{
         dto::notification_dto::{NotificationRequest, NotificationTypeEnum},
-        services::notification_service::{self, NotificationService},
+        services::notification_service::NotificationService,
     },
-    user::services::user_service::UserService,
 };
 
 use super::postgres_pool::Db;
@@ -25,7 +23,11 @@ pub enum ProcessIncomingMessage {
     // other variants will go here as you add them
 }
 
-pub fn process_incoming_message(message: ProcessIncomingMessage) -> String {
+pub fn process_incoming_message(
+    message: ProcessIncomingMessage,
+    message_service: &mut MessageService,
+    chat_room_service: &mut ChatRoomService,
+) -> String {
     match message {
         ProcessIncomingMessage::Chat {
             message,
@@ -34,10 +36,10 @@ pub fn process_incoming_message(message: ProcessIncomingMessage) -> String {
             chat_room_id,
         } => {
             // make message with user_id and chat_room_id and message
-            let mut conn = Db::connect_to_db();
-            let mut message_service = MessageService::new(&mut conn);
+
             let message = NewMessage::new(message);
-            let message = message_service.create_message(chat_room_id, &message, user_id);
+            let message =
+                message_service.create_message(chat_room_id, &message, user_id, chat_room_service);
             log::debug!("message: {:?}", message.id);
             let mut conn = Db::connect_to_db();
             let mut notification_service = NotificationService::new(&mut conn);
@@ -81,7 +83,10 @@ pub enum SendingRequestToRedis {
     },
 }
 
-pub fn sending_request_to_redis(message: SendingRequestToRedis) -> String {
+pub fn sending_request_to_redis(
+    message: SendingRequestToRedis,
+    chat_room_user_service: &mut ChatRoomUserService,
+) -> String {
     match message {
         SendingRequestToRedis::Chat {
             message,
@@ -89,8 +94,7 @@ pub fn sending_request_to_redis(message: SendingRequestToRedis) -> String {
             chat_room_id,
         } => {
             // pg db connection
-            let mut conn = Db::connect_to_db();
-            let mut chat_room_user_service = ChatRoomUserService::new(&mut conn);
+
             let chat_room_users =
                 chat_room_user_service.find_all_user_ids_with_chat_room_id(chat_room_id);
 

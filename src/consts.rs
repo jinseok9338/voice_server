@@ -1,3 +1,8 @@
+use diesel::{
+    r2d2::{ConnectionManager, Pool, PooledConnection},
+    PgConnection,
+};
+
 pub struct CheckPath<'a> {
     pub path: &'a str,
     pub method: &'a str,
@@ -46,3 +51,6 @@ pub(crate) const AUTH_MIDDLEWARE_CHECK_PATHS: &[CheckPath<'static>] = &[
     },
     // Add more excluded paths as needed
 ];
+
+pub type Conn = PooledConnection<ConnectionManager<PgConnection>>;
+pub type DbPool = Pool<ConnectionManager<PgConnection>>;

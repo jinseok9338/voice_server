@@ -3,6 +3,7 @@ use std::env;
 use chrono::NaiveDateTime;
 use diesel::{AsChangeset, Insertable, Queryable, QueryableByName};
 use serde::{Deserialize, Serialize};
+use utoipa::{ToResponse, ToSchema};
 
 use crate::schema::auths;
 use dotenv::dotenv;
@@ -58,11 +59,12 @@ impl Auth {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema, ToResponse)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthResponse {
     pub access_token: String,
     pub refresh_token: String,
+    #[schema(value_type = String, format = "date-time")]
     pub expiration: NaiveDateTime,
 }
 #[derive(Serialize, Deserialize)]

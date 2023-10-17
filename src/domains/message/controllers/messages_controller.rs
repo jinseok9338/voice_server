@@ -1,22 +1,26 @@
+use std::sync::Arc;
+
 use actix_http::HttpMessage;
 use actix_web::{get, post, web, HttpRequest, Responder};
 
 use uuid::Uuid;
 
-use crate::database::postgres_pool::Db;
 use crate::domains::auth::services::jwt_service::Claims;
+
 use crate::domains::message::dto::message_dto::{MessageQuery, NewMessage};
 
-use crate::domains::message::services::message_service::MessageService;
+use crate::domains::services::AppStateServices;
 use crate::errors::base_error_messages::{BaseError, BaseErrorMessages};
 
 #[get("/{chat_room_id}")]
 async fn get_chat_rooms_messages(
     path: web::Path<String>,
     params: web::Query<MessageQuery>,
+    data: web::Data<Arc<AppStateServices>>,
 ) -> Result<impl Responder, BaseError> {
     // get the chat_room_id from the url
     let chat_room_id = path.into_inner();
+    let data = data.into_inner();
     let chat_room_id = chat_room_id
         .parse::<Uuid>()
         .expect("chat_room_id is not a Uuid");
@@ -32,8 +36,8 @@ async fn get_chat_rooms_messages(
         }
         None => None,
     };
-    let mut conn = Db::connect_to_db();
-    let mut message_service = MessageService::new(&mut conn);
+
+    let mut message_service = data.message_service();
     let message_pagination =
         message_service.read_messages_by_chat_room_id(chat_room_id, page, size, sort_by);
     Ok(web::Json(message_pagination))
@@ -44,8 +48,10 @@ async fn create_message(
     path: web::Path<String>,
     message: web::Json<NewMessage>,
     req: HttpRequest,
+    data: web::Data<Arc<AppStateServices>>,
 ) -> Result<impl Responder, BaseError> {
     // get the chat_room_id from the url
+    let data = data.into_inner();
     let claims = req.extensions();
     let claims = claims.get::<Claims>();
 
@@ -67,8 +73,10 @@ async fn create_message(
     // get the message from the body
     let message = message.into_inner();
     // create the message
-    let mut conn = Db::connect_to_db();
-    let mut message_service = MessageService::new(&mut conn);
-    let message = message_service.create_message(chat_room_id, &message, user_id);
+
+    let mut message_service = data.message_service();
+    let mut chat_room_service = data.chat_room_service();
+    let message =
+        message_service.create_message(chat_room_id, &message, user_id, &mut chat_room_service);
     Ok(web::Json(message))
 }

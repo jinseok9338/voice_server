@@ -1,22 +1,25 @@
-use diesel::PgConnection;
 use uuid::Uuid;
 
-use crate::domains::{
-    chat_room::{
-        dto::chat_room_dto::{ChatRoom, UpdateChatRoomRequest},
-        services::chat_room_service::ChatRoomService,
+use crate::{
+    consts::{Conn, DbPool},
+    domains::{
+        chat_room::{
+            dto::chat_room_dto::{ChatRoom, UpdateChatRoomRequest},
+            services::chat_room_service::ChatRoomService,
+        },
+        message::dto::message_dto::{Message, NewMessage, Pagination},
     },
-    message::dto::message_dto::{Message, NewMessage, Pagination},
 };
 
 use super::database::message_database::{create_message_to_database, read_all_by_chat_room_ids};
 
-pub struct MessageService<'a> {
-    pub conn: &'a mut PgConnection,
+pub struct MessageService {
+    pub conn: Conn,
 }
 
-impl<'a> MessageService<'a> {
-    pub fn new(conn: &'a mut PgConnection) -> Self {
+impl MessageService {
+    pub fn new(pool: DbPool) -> Self {
+        let conn = pool.get().expect("Error connecting to the database");
         Self { conn }
     }
 
@@ -25,10 +28,12 @@ impl<'a> MessageService<'a> {
         chat_room_id: Uuid,
         new_message: &NewMessage,
         user_id: Uuid,
+        chat_room_service: &mut ChatRoomService,
     ) -> Message {
-        let message = create_message_to_database(self.conn, chat_room_id, new_message, user_id);
+        let message =
+            create_message_to_database(&mut self.conn, chat_room_id, new_message, user_id);
         // update the chat room last message, last_send_by
-        let mut chat_room_service = ChatRoomService::new(self.conn);
+
         let chat_room = chat_room_service
             .read_one_chat_rom(chat_room_id)
             .expect("chat room not found");
@@ -49,19 +54,8 @@ impl<'a> MessageService<'a> {
         size: Option<i32>,
         sort_by: Option<(&str, &str)>,
     ) -> Pagination<Message> {
-        let pagination = read_all_by_chat_room_ids(self.conn, chat_room_id, page, size, sort_by);
+        let pagination =
+            read_all_by_chat_room_ids(&mut self.conn, chat_room_id, page, size, sort_by);
         pagination
     }
-
-    // pub fn read_one_chat_room(&mut self, id: i32) -> Option<ChatRoom> {
-    //     read_one(self.conn, id)
-    // }
-
-    // pub fn update_chat_room(&mut self, chat_room: &ChatRoom) -> ChatRoom {
-    //     update_one(self.conn, chat_room.id, chat_room)
-    // }
-
-    // pub fn delete_chat_room(&mut self, id: i32) -> usize {
-    //     delete_one(self.conn, id)
-    // }
 }
